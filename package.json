@@ -1,0 +1,77 @@
+{
+  "name": "toodly",
+  "version": "1.0.0",
+  "description": "App desktop per la gestione dei task personali in stile TickTick: liste, Kanban, calendario, set di dati multi-finestra. Tauri v2 + SvelteKit.",
+  "keywords": [
+    "todo",
+    "to-do",
+    "task-manager",
+    "tasks",
+    "productivity",
+    "kanban",
+    "calendar",
+    "desktop-app",
+    "tauri",
+    "tauri-v2",
+    "sveltekit",
+    "svelte",
+    "svelte5",
+    "tailwindcss",
+    "sqlite",
+    "rust",
+    "ticktick",
+    "multi-window",
+    "i18n"
+  ],
+  "homepage": "https://github.com/atlantidezign/toodly#readme",
+  "bugs": {
+    "url": "https://github.com/atlantidezign/toodly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atlantidezign/toodly.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Alessandro Di Michele",
+    "email": "info@atlantide-design.it",
+    "url": "https://www.atlantide-design.it"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^4.0.0",
+    "@sveltejs/kit": "^3.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tauri-apps/cli": "^2.12.2",
+    "@types/dompurify": "^3.0.5",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4"
+  },
+  "dependencies": {
+    "@fontsource/quicksand": "^5.3.0",
+    "@lucide/svelte": "^1.55.0",
+    "@tauri-apps/api": "^2.12.3",
+    "@tauri-apps/plugin-autostart": "^2.7.0",
+    "@tauri-apps/plugin-dialog": "^2.8.2",
+    "@tauri-apps/plugin-sql": "^2.5.0",
+    "bits-ui": "^2.19.5",
+    "dompurify": "^3.4.16",
+    "marked": "^18.1.0",
+    "motion": "^14.1.0"
+  }
+}

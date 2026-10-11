@@ -1,0 +1,318 @@
+<script lang="ts">
+	import { open as pickFiles } from '@tauri-apps/plugin-dialog';
+	import { Hourglass, Link2, CheckCircle2, Circle, ArrowLeft, FileText, Flag, Paperclip, Plus, Trash2, X, Repeat, Clock, CalendarDays, Layers, FolderOpen, Folder } from '@lucide/svelte';
+	import Checkbox from './Checkbox.svelte';
+	import Select from './Select.svelte';
+	import MarkdownEditor from './MarkdownEditor.svelte';
+	import QuickInput from './QuickInput.svelte';
+	import { store } from '../store.svelte';
+	import { t as tt } from '../i18n.svelte';
+	import { ui, showToast } from '../nav.svelte';
+	import { mIn, mOut } from '../motion';
+	import { renderMarkdown } from '../markdown';
+	import { formatBytes, formatStamp, toMinutes, fromMinutes, todayISO } from '../dates';
+	import { PRIORITIES, RECURRENCES, STATUSES, type Priority, type Recurrence, type Status } from '../types';
+
+	const task = $derived(ui.selectedTaskId ? store.byId.get(ui.selectedTaskId) : undefined);
+	const parent = $derived(task?.parent_id ? store.byId.get(task.parent_id) : undefined);
+	const subs = $derived(task ? store.children(task.id) : []);
+	const prereqs = $derived(task ? store.prereqs(task.id) : []);
+	const dependents = $derived(task ? store.dependents(task.id) : []);
+	const blockers = $derived(task && !task.completed ? store.blockers(task.id) : []);
+	const depCandidates = $derived(
+		task
+			? store.tasks
+					.filter((t) => t.id !== task.id && !t.completed && !prereqs.some((p) => p.id === t.id) && !store.wouldCycle(task.id, t.id))
+					.map((t) => ({ value: t.id, label: t.title, color: store.listOf(t.list_id)?.color ?? 'var(--p0)' }))
+			: []
+	);
+	async function addDep(id: string) {
+		if (!task || !id) return;
+		if (!(await store.addDep(task.id, id))) showToast(tt('Dipendenza circolare: non consentita'));
+	}
+	const notes = $derived(task ? store.notesOf(task.id) : []);
+	const files = $derived(task ? store.attachmentsOf(task.id) : []);
+
+	const listOptions = $derived([
+		...store.listsSorted.map((l) => ({ value: l.id, label: l.name, color: l.color }))
+	]);
+
+	const groupOptions = $derived([
+		{ value: '', label: tt('Nessun gruppo') },
+		...store.groups.map((g) => ({ value: g.id, label: store.groupPath(g.id) })).sort((a, b) => a.label.localeCompare(b.label))
+	]);
+
+	let confirmDelete = $state(false);
+	let newNote = $state('');
+	let titleEl = $state<HTMLInputElement>();
+	let titleDraft = $state('');
+	let lastId = '';
+
+	$effect(() => {
+		if (task && task.id !== lastId) {
+			lastId = task.id;
+			titleDraft = task.title;
+			confirmDelete = false;
+			newNote = '';
+			if (task.title === 'Nuovo task' || task.title === 'New task') queueMicrotask(() => { titleEl?.focus(); titleEl?.select(); });
+		}
+	});
+
+	function saveTitle() {
+		if (!task) return;
+		const t = titleDraft.trim();
+		if (!t) titleDraft = task.title;
+		else if (t !== task.title) store.updateTask(task.id, { title: t });
+	}
+
+	function setStart(v: string) {
+		if (!task) return;
+		const patch: Record<string, string | null> = { start_time: v || null };
+		if (v && !task.due_date) patch.due_date = todayISO();
+		if (v && !task.end_time) patch.end_time = fromMinutes(Math.min((toMinutes(v) ?? 0) + 60, 1439));
+		if (!v) patch.end_time = null;
+		store.updateTask(task.id, patch);
+	}
+	function setEnd(v: string) {
+		if (!task) return;
+		if (v && task.start_time && (toMinutes(v) ?? 0) <= (toMinutes(task.start_time) ?? 0)) {
+			showToast(tt("L'ora di fine deve seguire quella di inizio"));
+			return;
+		}
+		store.updateTask(task.id, { end_time: v || null });
+	}
+
+	async function addFiles() {
+		if (!task) return;
+		const res = await pickFiles({ multiple: true, directory: false });
+		if (!res) return;
+		const paths = Array.isArray(res) ? res : [res];
+		for (const p of paths) {
+			try {
+				await store.addAttachment(task.id, typeof p === 'string' ? p : (p as { path: string }).path);
+			} catch (e) {
+				showToast(tt('Impossibile allegare il file'));
+				console.error(e);
+			}
+		}
+	}
+
+	async function openFile(path: string) {
+		try {
+			await store.openAttachment(path);
+		} catch {
+			showToast(tt('Impossibile aprire il file'));
+		}
+	}
+
+	function addNote() {
+		const t = newNote.trim();
+		if (!t || !task) return;
+		store.addNote(task.id, t);
+		newNote = '';
+	}
+
+	async function remove() {
+		if (!task) return;
+		if (!confirmDelete) {
+			confirmDelete = true;
+			setTimeout(() => (confirmDelete = false), 3000);
+			return;
+		}
+		const id = task.id;
+		ui.selectedTaskId = parent?.id ?? null;
+		await store.deleteTask(id);
+	}
+</script>
+
+{#if task}
+	<aside
+		data-drawer
+		class="absolute top-0 right-0 z-30 flex h-full w-[600px] max-w-full flex-col border-l border-border bg-panel shadow-pop"
+		in:mIn={{ x: 56, duration: 0.32 }}
+		out:mOut={{ x: 56, duration: 0.2 }}
+	>
+		<header class="flex items-center gap-2 border-b border-border px-4 py-2.5">
+			<Checkbox checked={task.completed} blocked={blockers.length > 0} color="var(--p{task.priority})" onchange={(v) => store.setCompleted(task.id, v)} />
+			{#if parent}
+				<button class="btn btn-ghost h-7 px-2" onclick={() => (ui.selectedTaskId = parent.id)}><ArrowLeft size={14} />{parent.title.slice(0, 22)}</button>
+			{/if}
+			<div class="ml-auto flex items-center gap-1">
+				<button class="btn {confirmDelete ? 'border-p3 text-p3' : 'btn-ghost'} h-7 px-2" onclick={remove} title={tt('Elimina task')}>
+					<Trash2 size={14} />{#if confirmDelete}{tt('Conferma')}{/if}
+				</button>
+				<button class="icon-btn" onclick={() => (ui.selectedTaskId = null)} aria-label={tt('Chiudi')}><X size={16} /></button>
+			</div>
+		</header>
+
+		{#if blockers.length}
+			<div class="flex items-start gap-2 border-b border-p2/30 bg-p2/10 px-5 py-2 text-[12.5px] text-p2" in:mIn={{ y: -6 }}>
+				<Hourglass size={14} class="mt-0.5 shrink-0" />
+				<span>{tt('In attesa di')}: <strong>{blockers.map((b) => b.title).join(', ')}</strong></span>
+			</div>
+		{/if}
+		<div class="flex-1 space-y-5 overflow-y-auto px-5 py-4" data-scroll="y">
+			{#key task.id}
+				<input
+					bind:this={titleEl}
+					bind:value={titleDraft}
+					onblur={saveTitle}
+					onkeydown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur(); }}
+					class="w-full bg-transparent text-[19px] leading-snug font-semibold outline-none placeholder:text-faint {task.completed ? 'text-muted line-through' : ''}"
+					placeholder={tt('Titolo del task')}
+				/>
+			{/key}
+
+			<!-- proprietà -->
+			<div class="grid grid-cols-[110px_1fr] items-center gap-x-3 gap-y-2.5 text-[12.5px]">
+				<span class="flex items-center gap-1.5 text-muted"><Flag size={14} />{tt('Priorità')}</span>
+				<div class="flex gap-1">
+					{#each PRIORITIES as p}
+						<button
+							class="flex h-7 flex-1 items-center justify-center gap-1 rounded-md border text-[12px] transition-colors {task.priority === p.value ? 'border-transparent font-semibold text-white' : 'border-border text-muted hover:bg-hover'}"
+							style={task.priority === p.value ? `background:var(--${p.cls})` : ''}
+							onclick={() => store.updateTask(task.id, { priority: p.value as Priority })}
+						>
+							<Flag size={12} style={task.priority === p.value ? '' : `color:var(--${p.cls})`} />{p.label}
+						</button>
+					{/each}
+				</div>
+
+				<span class="flex items-center gap-1.5 text-muted"><FolderOpen size={14} />{tt('Lista')}</span>
+				<Select value={task.list_id ?? store.defaultListId ?? ''} options={listOptions} onchange={(v) => store.moveToList(task.id, v || null)} />
+
+				{#if !task.parent_id}
+					<span class="flex items-center gap-1.5 text-muted"><Folder size={14} />{tt('Gruppo')}</span>
+					<Select value={task.group_id ?? ''} options={groupOptions} onchange={(v) => store.moveToGroup(task.id, v || null)} />
+				{/if}
+
+				<span class="flex items-center gap-1.5 text-muted"><Layers size={14} />{tt('Stato')}</span>
+				<Select value={task.completed ? 'done' : task.status} options={STATUSES.map((s) => ({ value: s.value, label: s.label }))} onchange={(v) => store.setStatus(task.id, v as Status)} />
+
+				<span class="flex items-center gap-1.5 text-muted"><CalendarDays size={14} />{tt('Scadenza')}</span>
+				<div class="flex gap-1.5">
+					<input type="date" class="field" value={task.due_date ?? ''} onchange={(e) => {
+						const v = e.currentTarget.value;
+						store.updateTask(task.id, v ? { due_date: v } : { due_date: null, start_time: null, end_time: null, recurrence: 'none' });
+					}} />
+					{#if task.due_date}<button class="icon-btn" aria-label={tt('Rimuovi data')} onclick={() => store.updateTask(task.id, { due_date: null, start_time: null, end_time: null, recurrence: 'none' })}><X size={14} /></button>{/if}
+				</div>
+
+				<span class="flex items-center gap-1.5 text-muted"><Clock size={14} />{tt('Orario')}</span>
+				<div class="flex items-center gap-1.5">
+					<input type="time" class="field" value={task.start_time ?? ''} onchange={(e) => setStart(e.currentTarget.value)} />
+					<span class="text-faint">→</span>
+					<input type="time" class="field" value={task.end_time ?? ''} disabled={!task.start_time} onchange={(e) => setEnd(e.currentTarget.value)} />
+				</div>
+
+				<span class="flex items-center gap-1.5 text-muted"><Repeat size={14} />{tt('Ripetizione')}</span>
+				<div>
+					<Select value={task.recurrence} options={RECURRENCES} onchange={(v) => {
+						const patch: Record<string, string> = { recurrence: v };
+						if (v !== 'none' && !task.due_date) patch.due_date = todayISO();
+						store.updateTask(task.id, patch as { recurrence: Recurrence });
+					}} />
+				</div>
+			</div>
+
+			<!-- descrizione -->
+			<section>
+				<h4 class="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase"><FileText size={13} />{tt('Descrizione')}</h4>
+				{#key task.id}
+					<MarkdownEditor value={task.description} onsave={(v) => store.updateTask(task.id, { description: v })} />
+				{/key}
+			</section>
+
+			<!-- sotto-attività -->
+			<section>
+				<h4 class="mb-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase">{tt('Sotto-attività')} {#if subs.length}<span class="font-normal">· {subs.filter((s) => s.completed).length}/{subs.length}</span>{/if}</h4>
+				<div class="space-y-0.5">
+					{#each subs as s (s.id)}
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div class="group flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-hover" onclick={() => (ui.selectedTaskId = s.id)}>
+							<Checkbox checked={s.completed} color="var(--p{s.priority})" size={16} onchange={(v) => store.setCompleted(s.id, v)} />
+							<span class="flex-1 truncate {s.completed ? 'text-muted line-through' : ''}">{s.title}</span>
+							<button class="icon-btn size-6 opacity-0 group-hover:opacity-100" aria-label={tt('Elimina')} onclick={(e) => { e.stopPropagation(); store.deleteTask(s.id); }}><X size={13} /></button>
+						</div>
+					{/each}
+				</div>
+				<div class="mt-1.5"><QuickInput compact placeholder={tt('Aggiungi sotto-attività…')} onsubmit={(t) => store.createTask({ title: t, parent_id: task.id, due_date: null })} /></div>
+			</section>
+
+			<!-- dipendenze -->
+			<section>
+				<h4 class="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-muted uppercase"><Link2 size={13} />{tt('Dipendenze')}</h4>
+				<p class="mb-1 text-[11.5px] text-faint">{tt('Il task resta «in attesa» finché i prerequisiti non sono completati.')}</p>
+				<div class="space-y-0.5">
+					{#each prereqs as p (p.id)}
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div class="group flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-hover" onclick={() => (ui.selectedTaskId = p.id)}>
+							{#if p.completed}<CheckCircle2 size={16} class="shrink-0 text-p1" />{:else}<Hourglass size={15} class="shrink-0 text-p2" />{/if}
+							<span class="flex-1 truncate {p.completed ? 'text-muted line-through' : ''}">{p.title}</span>
+							<span class="text-[11px] text-faint">{p.completed ? tt('completato') : tt('da fare')}</span>
+							<button class="icon-btn size-6 opacity-0 group-hover:opacity-100" aria-label={tt('Rimuovi dipendenza')} onclick={(e) => { e.stopPropagation(); store.removeDep(task.id, p.id); }}><X size={13} /></button>
+						</div>
+					{/each}
+				</div>
+				<div class="mt-1.5"><Select value="" options={depCandidates} placeholder={tt('＋ Dipende da…')} onchange={addDep} /></div>
+				{#if dependents.length}
+					<h5 class="mt-3 mb-1 text-[11.5px] font-medium text-muted">{tt('Sblocca')}</h5>
+					<div class="space-y-0.5">
+						{#each dependents as d (d.id)}
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+							<div class="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-hover" onclick={() => (ui.selectedTaskId = d.id)}>
+								<Circle size={14} class="shrink-0 text-faint" />
+								<span class="flex-1 truncate {d.completed ? 'text-muted line-through' : ''}">{d.title}</span>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</section>
+
+			<!-- note multiple -->
+			<section>
+				<h4 class="mb-2 text-[12px] font-semibold tracking-wide text-muted uppercase">{tt('Note')} {#if notes.length}<span class="font-normal">· {notes.length}</span>{/if}</h4>
+				<div class="space-y-2.5">
+					{#each notes as n (n.id)}
+						<div class="group relative rounded-xl border border-border bg-sidebar/60 px-3 py-2" in:mIn|local={{ y: 8 }}>
+							<div class="md text-[13px]">{@html renderMarkdown(n.text)}</div>
+							<div class="mt-1 flex items-center text-[11px] text-faint">
+								<time datetime={n.created_at}>{formatStamp(n.created_at)}</time>
+								<button class="icon-btn ml-auto size-6 opacity-0 group-hover:opacity-100" aria-label={tt('Elimina nota')} onclick={() => store.deleteNote(n.id)}><Trash2 size={12} /></button>
+							</div>
+						</div>
+					{/each}
+				</div>
+				<div class="mt-2 rounded-xl border border-border bg-panel focus-within:border-accent">
+					<textarea
+						bind:value={newNote}
+						rows="2"
+						placeholder={tt('Aggiungi una nota… (Ctrl+Invio per salvare)')}
+						class="block w-full resize-none bg-transparent px-3 py-2 outline-none"
+						onkeydown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNote(); } }}
+					></textarea>
+					<div class="flex justify-end px-2 pb-2"><button class="btn btn-primary h-7" disabled={!newNote.trim()} onclick={addNote}><Plus size={14} />{tt('Aggiungi nota')}</button></div>
+				</div>
+			</section>
+
+			<!-- allegati -->
+			<section class="pb-4">
+				<h4 class="mb-1.5 flex items-center text-[12px] font-semibold tracking-wide text-muted uppercase">
+					<Paperclip size={13} class="mr-1.5" />{tt('Allegati')} {#if files.length}<span class="ml-1 font-normal">· {files.length}</span>{/if}
+					<button class="btn ml-auto h-7" onclick={addFiles}><Plus size={14} />{tt('Aggiungi file')}</button>
+				</h4>
+				<div class="space-y-1">
+					{#each files as f (f.id)}
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div class="group flex cursor-pointer items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 hover:border-accent/60 hover:bg-hover" onclick={() => openFile(f.path)} title={f.path}>
+							<Paperclip size={14} class="shrink-0 text-muted" />
+							<span class="min-w-0 flex-1 truncate">{f.name}</span>
+							<span class="text-[11px] text-faint">{formatBytes(f.size)}</span>
+							<button class="icon-btn size-6 opacity-0 group-hover:opacity-100" aria-label={tt('Rimuovi allegato')} onclick={(e) => { e.stopPropagation(); store.removeAttachment(f.id); }}><X size={13} /></button>
+						</div>
+					{/each}
+				</div>
+			</section>
+		</div>
+	</aside>
+{/if}

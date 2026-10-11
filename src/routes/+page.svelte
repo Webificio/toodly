@@ -1,0 +1,14 @@
+<script lang="ts">
+	import ListView from '../lib/components/ListView.svelte';
+	import KanbanView from '../lib/components/KanbanView.svelte';
+	import CalendarView from '../lib/components/CalendarView.svelte';
+	import { nav } from '../lib/nav.svelte';
+</script>
+
+{#if nav.mode === 'kanban'}
+	<KanbanView />
+{:else if nav.mode === 'calendar'}
+	<CalendarView />
+{:else}
+	<ListView />
+{/if}
