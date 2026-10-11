@@ -2,10 +2,8 @@
   <img src="docs/logo.png" alt="toodly" width="200">
 </p>
 
-<h1 align="center">toodly</h1>
-
 <p align="center">
-  A fast, local-first desktop to-do app in the spirit of TickTick and Linear.<br>
+  Toodly is a fast, local-first desktop to-do app, written in Rust, in the spirit of TickTick and Linear.<br>
   Lists, Kanban, calendar with time-blocking, sub-tasks, dependencies, multiple windows and independent data sets.
 </p>
 
