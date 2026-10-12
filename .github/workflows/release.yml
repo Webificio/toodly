@@ -1,12 +1,14 @@
 # Builds the toodly installers on Windows, macOS and Linux (cross-compiling is not possible:
 # each platform must be built on its own operating system).
-# Start: Actions tab → "Build installer" → Run workflow, or push a v* tag.
-# A v* tag also publishes a GitHub release whose text is the matching section of CHANGELOG.md.
+# Start: Actions tab → "Build installer" → Run workflow (the v* tag trigger is currently commented out below).
+# When re-enabled, a v* tag also publishes a GitHub release whose text is the matching section of CHANGELOG.md.
 name: Build installer
 on:
   workflow_dispatch:
-  push:
-    tags: ['v*']
+  # Disabled for now: pushing a v* tag does NOT start the build/release.
+  # Uncomment the two lines below to re-enable it (the check and release jobs only run for tags).
+  # push:
+  #   tags: ['v*']
 
 jobs:
   # Only for tags: the tag must match package.json and CHANGELOG.md must have a section for it.
