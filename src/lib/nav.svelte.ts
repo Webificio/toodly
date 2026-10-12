@@ -12,7 +12,7 @@ export const nav = {
 	},
 	get mode(): Mode {
 		const m = page.url.searchParams.get('mode');
-		return m === 'kanban' || m === 'calendar' ? m : 'list';
+		return m === 'kanban' || m === 'calendar' || m === 'gantt' ? m : 'list';
 	},
 	get sort(): SortMode {
 		const s = page.url.searchParams.get('sort');
@@ -23,6 +23,10 @@ export const nav = {
 	},
 	get cal(): 'month' | 'week' {
 		return page.url.searchParams.get('cal') === 'month' ? 'month' : 'week';
+	},
+	get gantt(): 'day' | 'week' | 'month' {
+		const z = page.url.searchParams.get('gz');
+		return z === 'day' || z === 'month' ? z : 'week';
 	},
 	get date(): string {
 		return page.url.searchParams.get('d') ?? todayISO();
@@ -52,7 +56,7 @@ export interface ConfirmReq {
 	run: () => void | Promise<void>;
 }
 
-export const ui = $state<{ confirm: ConfirmReq | null; selectedTaskId: string | null; settingsOpen: boolean; bulkOpen: boolean; filterEditor: string | null | 'new'; listEditor: string | null | 'new'; groupEditor: string | null; importPlan: Backup | null; pickDataset: boolean; dataOpen: boolean; datasetId: string | null; closeAsk: boolean; aboutOpen: boolean }>({
+export const ui = $state<{ confirm: ConfirmReq | null; selectedTaskId: string | null; settingsOpen: boolean; bulkOpen: boolean; filterEditor: string | null | 'new'; listEditor: string | null | 'new'; groupEditor: string | null; importPlan: Backup | null; pickDataset: boolean; dataOpen: boolean; datasetId: string | null; closeAsk: boolean; aboutOpen: boolean; searchOpen: boolean; statsOpen: boolean; tourOpen: boolean; shortcutsOpen: boolean; templatesOpen: boolean }>({
 	confirm: null,
 	selectedTaskId: null,
 	settingsOpen: false,
@@ -65,17 +69,31 @@ export const ui = $state<{ confirm: ConfirmReq | null; selectedTaskId: string | 
 	dataOpen: false,
 	datasetId: null,
 	closeAsk: false,
-	aboutOpen: false
+	aboutOpen: false,
+	searchOpen: false,
+	statsOpen: false,
+	tourOpen: false,
+	shortcutsOpen: false,
+	templatesOpen: false
 });
 
-export const toast = $state<{ msg: string; id: number }>({ msg: '', id: 0 });
-export function showToast(msg: string) {
+export interface ToastAction {
+	label: string;
+	run: () => void | Promise<void>;
+}
+export const toast = $state<{ msg: string; id: number; action: ToastAction | null }>({ msg: '', id: 0, action: null });
+/** Messaggio temporaneo; con `action` mostra anche un pulsante (es. «Annulla») e resta più a lungo. */
+export function showToast(msg: string, action: ToastAction | null = null, ms = 2600) {
 	toast.msg = msg;
+	toast.action = action;
 	toast.id++;
 	const id = toast.id;
 	setTimeout(() => {
-		if (toast.id === id) toast.msg = '';
-	}, 2600);
+		if (toast.id === id) {
+			toast.msg = '';
+			toast.action = null;
+		}
+	}, ms);
 }
 
 /** Apre la modale di conferma globale. */

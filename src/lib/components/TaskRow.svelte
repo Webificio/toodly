@@ -8,6 +8,7 @@
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { ui } from '../nav.svelte';
+	import { uiprefs } from '../uiprefs.svelte';
 	import { drawStrike } from '../motion';
 	import { draggable, dropzone, type DropEvent } from '../dnd.svelte';
 	import type { Task } from '../types';
@@ -16,6 +17,7 @@
 		task,
 		depth = 0,
 		hasChildren = false,
+		num = 0,
 		expanded = true,
 		sortable = false,
 		showList = true,
@@ -28,6 +30,7 @@
 		task: Task;
 		depth?: number;
 		hasChildren?: boolean;
+		num?: number;
 		expanded?: boolean;
 		sortable?: boolean;
 		showList?: boolean;
@@ -70,7 +73,8 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div
 		data-task
-		class="flex cursor-pointer items-start gap-2 rounded-lg py-1.5 pr-3 transition-colors duration-100 hover:bg-hover {selection.has(task.id) ? 'bg-accent/15 ring-1 ring-accent/40 hover:bg-accent/20' : selected ? 'bg-active hover:bg-active' : ''}"
+		data-task-id={task.id}
+		class="flex cursor-pointer items-start gap-2 rounded-lg py-[var(--row-py)] pr-3 transition-colors duration-100 hover:bg-hover {selection.has(task.id) ? 'bg-accent/15 ring-1 ring-accent/40 hover:bg-accent/20' : selected ? 'bg-active hover:bg-active' : ''}"
 		style="padding-left:{6 + depth * 26}px"
 		onclick={(e) => { if (!handleSelectClick(e, task.id)) ui.selectedTaskId = task.id; else ui.selectedTaskId = null; }}
 	>
@@ -85,6 +89,7 @@
 			</span>
 		{/if}
 		<div class="mt-px"><Checkbox checked={struck} {color} {blocked} onchange={toggle} /></div>
+		{#if uiprefs.showNumbers && num > 0}<span class="mt-px min-w-[1.25em] shrink-0 text-right text-[13px] leading-5 font-semibold text-accent tabular-nums">{num}</span>{/if}
 		<div class="min-w-0 flex-1">
 			<div class="relative inline-block max-w-full transition-opacity duration-300 {struck ? 'opacity-45' : blocked ? 'opacity-70' : ''}">
 				<span class="block truncate text-[14px] leading-5">{task.title}</span>

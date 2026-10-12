@@ -20,7 +20,7 @@
 	const blocked = $derived(!task.completed && store.blockedIds.has(task.id));
 
 	function setDue(due: string | null) {
-		store.updateTask(task.id, due ? { due_date: due } : { due_date: null, start_time: null, end_time: null, recurrence: 'none' });
+		store.updateTask(task.id, due ? { due_date: due } : { due_date: null, start_time: null, end_time: null, remind_min: null, recurrence: 'none' });
 		dateOpen = false;
 	}
 

@@ -23,8 +23,8 @@ Other scripts: `npm run check` (svelte-check), `npm run build` (**frontend only*
 
 | System | Direct executable | Installers / packages (`src-tauri/target/release/bundle/…`) |
 |---|---|---|
-| **Windows** | `src-tauri/target/release/toodly.exe` (requires WebView2) | `nsis/toodly_1.0.0_x64-setup.exe`, `msi/toodly_1.0.0_x64_en-US.msi` |
-| **macOS** | — | `macos/toodly.app`, `dmg/toodly_1.0.0_<arch>.dmg` |
+| **Windows** | `src-tauri/target/release/toodly.exe` (requires WebView2) | `nsis/toodly_1.1.0_x64-setup.exe`, `msi/toodly_1.1.0_x64_en-US.msi` |
+| **macOS** | — | `macos/toodly.app`, `dmg/toodly_1.1.0_<arch>.dmg` |
 | **Linux** | `src-tauri/target/release/toodly` | `deb/*.deb`, `rpm/*.rpm`, `appimage/*.AppImage` |
 
 Useful commands:
@@ -44,6 +44,8 @@ First build: it needs the prerequisites above and a few minutes to compile the R
 ## CI for all platforms
 
 `.github/workflows/release.yml` builds Windows, macOS (universal) and Linux on GitHub Actions and attaches the installers as artifacts (manual start from *Actions → Build installer → Run workflow*, or by pushing a `v*` tag).
+
+**Releasing**: move the *Unreleased* items of `CHANGELOG.md` under `## [x.y.z] - date`, bump the version (`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`), commit, then `git tag vx.y.z && git push --tags`. For a tag the workflow verifies that the tag matches `package.json` and that the changelog has a section for it, runs `npm test`, builds the three platforms and publishes a GitHub release with the installers attached and that changelog section as its description.
 
 ## Releasing a new version
 

@@ -10,11 +10,11 @@
 	let {
 		group,
 		depth = 0,
-		count = 0,
+		count = { total: 0, high: 0, medium: 0 },
 		collapsed = false,
 		ontoggle,
 		onaddtask
-	}: { group: Group; depth?: number; count?: number; collapsed?: boolean; ontoggle: () => void; onaddtask: () => void } = $props();
+	}: { group: Group; depth?: number; count?: { total: number; high: number; medium: number }; collapsed?: boolean; ontoggle: () => void; onaddtask: () => void } = $props();
 
 	let over = $state(false);
 
@@ -45,7 +45,9 @@
 		<span class="grid w-4 shrink-0 place-items-center text-faint"><ChevronRight size={14} class="transition-transform duration-150 {collapsed ? '' : 'rotate-90'}" /></span>
 		{#if collapsed}<Folder size={16} class="shrink-0 text-accent" />{:else}<FolderOpen size={16} class="shrink-0 text-accent" />{/if}
 		<span class="min-w-0 truncate text-[13.5px] font-semibold">{group.name}</span>
-		<span class="shrink-0 rounded-full bg-hover px-1.5 text-[11px] text-muted">{count}</span>
+		<span class="shrink-0 rounded-full bg-hover px-1.5 text-[11px] text-muted tabular-nums">{count.total}</span>
+		{#if count.high > 0}<span class="shrink-0 rounded-full px-1.5 text-[11px] font-semibold text-white tabular-nums" style="background:var(--p3)">{count.high}</span>{/if}
+		{#if count.medium > 0}<span class="shrink-0 rounded-full px-1.5 text-[11px] font-semibold text-white tabular-nums" style="background:var(--p2)">{count.medium}</span>{/if}
 		<span class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100" data-nodrag onclick={(e) => e.stopPropagation()}>
 			<button class="icon-btn size-7" title={t('Aggiungi un task…')} aria-label={t('Aggiungi un task…')} onclick={onaddtask}><Plus size={14} /></button>
 			<button class="icon-btn size-7" title={t('Nuovo sottogruppo')} aria-label={t('Nuovo sottogruppo')} onclick={() => (ui.groupEditor = 'new:' + group.id)}><FolderPlus size={14} /></button>

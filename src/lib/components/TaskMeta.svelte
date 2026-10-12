@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, Repeat, Paperclip, MessageSquare, ListTree, Hourglass, Link2 } from '@lucide/svelte';
+	import { CalendarDays, Repeat, Paperclip, MessageSquare, ListTree, Hourglass, Link2, Bell, Hash } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { relativeDay, diffDays, todayISO } from '../dates';
@@ -40,11 +40,13 @@
 		</span>
 	{/if}
 	{#if task.recurrence !== 'none'}<Repeat size={12} />{/if}
+	{#if task.remind_min != null && task.due_date && !task.completed}<span title={t('Promemoria')}><Bell size={12} /></span>{/if}
 	{#if subs.length}
 		<span class="inline-flex items-center gap-1"><ListTree size={12} />{subsDone}/{subs.length}</span>
 	{/if}
 	{#if nNotes}<span class="inline-flex items-center gap-1"><MessageSquare size={12} />{nNotes}</span>{/if}
 	{#if nFiles}<span class="inline-flex items-center gap-1"><Paperclip size={12} />{nFiles}</span>{/if}
+	{#each task.tags as g (g)}<span class="inline-flex items-center rounded-full bg-hover px-1.5 py-px text-accent"><Hash size={10} />{g}</span>{/each}
 	{#if showList && list}
 		<span class="inline-flex items-center gap-1"><span class="size-2 rounded-full" style="background:{list.color}"></span>{list.name}</span>
 	{/if}

@@ -5,15 +5,16 @@
 	import TaskRow from './TaskRow.svelte';
 	import QuickInput from './QuickInput.svelte';
 	import GroupRow from './GroupRow.svelte';
-	import { FolderPlus } from '@lucide/svelte';
-	import { collapsedGroups, toggleGroup, expandGroup } from '../groupui.svelte';
+	import { FolderPlus, LayoutTemplate } from '@lucide/svelte';
+	import { collapsedGroups, loadCollapsed, toggleGroup, expandGroup } from '../groupui.svelte';
+	import { currentWorkspace } from '../db';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { setVisibleOrder } from '../selection.svelte';
 	import { nav, ui } from '../nav.svelte';
 	import { inScope, parseScope, sortTasks } from '../views';
 	import { parseQuick } from '../quickparse';
-	import { addDays, todayISO } from '../dates';
+	import { addDays, todayISO, toMinutes, formatDayLong } from '../dates';
 	import { mIn } from '../motion';
 	import { drag, dropzone, type DropEvent } from '../dnd.svelte';
 	import type { Group, Task } from '../types';
@@ -22,6 +23,11 @@
 	const matched = $derived(store.tasks.filter((t) => inScope(t, nav.scope, store.filters, store.blockedIds)));
 	const matchedIds = $derived(new Set(matched.map((t) => t.id)));
 	const sorted = $derived(sortTasks(matched, nav.sort));
+
+	// cartelle aperte/chiuse: ricordate per ogni vista (lista, filtro…) di ogni set, riapplicate prima del disegno
+	$effect.pre(() => {
+		loadCollapsed(currentWorkspace(), nav.scope);
+	});
 
 	const collapsed = new SvelteSet<string>();
 	let showDone = $state(true);
@@ -40,15 +46,16 @@
 	});
 	const isRoot = (t: Task) => !t.parent_id || !matchedIds.has(t.parent_id);
 
-	interface Row { task: Task; depth: number; hasChildren: boolean }
+	interface Row { task: Task; depth: number; hasChildren: boolean; num: number }
 	function flatten(roots: Task[], base = 0): Row[] {
 		const out: Row[] = [];
-		const walk = (t: Task, depth: number) => {
+		// num: posizione progressiva tra i fratelli (stesso livello, i gruppi non contano)
+		const walk = (t: Task, depth: number, num: number) => {
 			const kids = childMap.get(t.id) ?? [];
-			out.push({ task: t, depth, hasChildren: kids.length > 0 });
-			if (!collapsed.has(t.id)) for (const k of kids) walk(k, depth + 1);
+			out.push({ task: t, depth, hasChildren: kids.length > 0, num });
+			if (!collapsed.has(t.id)) kids.forEach((k, i) => walk(k, depth + 1, i + 1));
 		};
-		for (const r of roots) walk(r, base);
+		roots.forEach((r, i) => walk(r, base, i + 1));
 		return out;
 	}
 	const doneRows = $derived(flatten(sorted.filter((t) => isRoot(t) && t.completed)));
@@ -58,9 +65,11 @@
 	const groupOf = (t: Task) => (t.group_id && store.groupsById.has(t.group_id) ? t.group_id : null);
 
 	type Item =
-		| { kind: 'group'; group: Group; depth: number; count: number; collapsed: boolean }
+		| { kind: 'group'; group: Group; depth: number; count: GroupCount; collapsed: boolean }
 		| { kind: 'add'; group: Group; depth: number }
 		| { kind: 'row'; row: Row };
+
+	type GroupCount = { total: number; high: number; medium: number };
 
 	let addingIn = $state<string | null>(null);
 
@@ -75,11 +84,22 @@
 		}
 		return m;
 	});
-	/** N. di task aperti (radice) in un gruppo, sottogruppi inclusi. */
+	/** N. di task aperti (radice) in un gruppo, sottogruppi inclusi: totale e, a parte, priorità alta/media. */
 	const counts = $derived.by(() => {
-		const c = new Map<string, number>();
-		const calc = (id: string): number => {
-			const n = (rootsByGroup.get(id)?.length ?? 0) + store.groupChildren(id).reduce((sum, g) => sum + calc(g.id), 0);
+		const c = new Map<string, GroupCount>();
+		const calc = (id: string): GroupCount => {
+			const own = rootsByGroup.get(id) ?? [];
+			const n: GroupCount = {
+				total: own.length,
+				high: own.filter((t) => t.priority === 3).length,
+				medium: own.filter((t) => t.priority === 2).length
+			};
+			for (const g of store.groupChildren(id)) {
+				const sub = calc(g.id);
+				n.total += sub.total;
+				n.high += sub.high;
+				n.medium += sub.medium;
+			}
 			c.set(id, n);
 			return n;
 		};
@@ -92,7 +112,7 @@
 			const out: Item[] = [];
 			// 1) prima i sottogruppi…
 			for (const g of store.groupChildren(parent)) {
-				const count = counts.get(g.id) ?? 0;
+				const count = counts.get(g.id) ?? { total: 0, high: 0, medium: 0 };
 								const isCollapsed = collapsedGroups.has(g.id);
 				out.push({ kind: 'group', group: g, depth, count, collapsed: isCollapsed });
 				if (!isCollapsed) {
@@ -106,10 +126,56 @@
 		};
 		return build(null, 0);
 	});
-	const openRows = $derived(items.flatMap((i) => (i.kind === 'row' ? [i.row] : [])));
+	// ---- «Oggi» e «Prossimi 7 giorni»: sezioni per giorno (Scaduti, Oggi, Domani…) con il carico pianificato ----
+	const dateMode = $derived(nav.scope === 'today' || nav.scope === 'next7');
+	interface Section { key: string; label: string; tone: 'late' | 'today' | 'normal'; rows: Row[]; count: number; minutes: number; untimed: number }
+	const sections = $derived.by((): Section[] => {
+		if (!dateMode) return [];
+		const today = todayISO();
+		const tomorrow = addDays(today, 1);
+		const buckets = new Map<string, Task[]>();
+		for (const x of sorted) {
+			if (!isRoot(x) || x.completed || !x.due_date) continue;
+			const k = x.due_date < today ? 'late' : x.due_date;
+			const a = buckets.get(k) ?? [];
+			a.push(x);
+			buckets.set(k, a);
+		}
+		const keys = [...buckets.keys()].sort((a, b) => (a === 'late' ? -1 : b === 'late' ? 1 : a.localeCompare(b)));
+		return keys.map((k) => {
+			let list = buckets.get(k)!;
+			// a parità di sezione prima i task con orario (in ordine d'orario), poi gli altri nell'ordine scelto
+			if (nav.sort === 'manual') {
+				const timed = list.filter((x) => x.start_time).sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0));
+				list = [...timed, ...list.filter((x) => !x.start_time)];
+			}
+			let minutes = 0;
+			let untimed = 0;
+			for (const x of list) {
+				const s = toMinutes(x.start_time);
+				const e = toMinutes(x.end_time);
+				if (s !== null && e !== null && e > s) minutes += e - s;
+				else untimed++;
+			}
+			return {
+				key: k,
+				label: k === 'late' ? t('Scaduti') : k === today ? t('Oggi') : k === tomorrow ? t('Domani') : formatDayLong(k),
+				tone: k === 'late' ? 'late' : k === today ? 'today' : 'normal',
+				rows: flatten(list),
+				count: list.length,
+				minutes,
+				untimed
+			};
+		});
+	});
+	const fmtLoad = (min: number) => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? ' ' + (min % 60) + 'm' : ''}` : `${min}m`);
+	const openRows = $derived(dateMode ? sections.flatMap((s) => s.rows) : items.flatMap((i) => (i.kind === 'row' ? [i.row] : [])));
 	$effect(() => setVisibleOrder([...openRows, ...doneRows].map((r) => r.task.id)));
 	const doneCount = $derived(matched.filter((t) => t.completed).length);
 	const itemKey = (i: Item) => (i.kind === 'row' ? 't:' + i.row.task.id : (i.kind === 'group' ? 'g:' : 'a:') + i.group.id);
+
+	/** nella vista di un'etichetta i nuovi task la ricevono */
+	const scopeTags = (tags: string[]) => (scopeInfo.kind === 'tag' ? [...tags, scopeInfo.id] : tags);
 
 	function addInGroup(group: Group, text: string) {
 		const p = parseQuick(text, store.lists);
@@ -118,6 +184,7 @@
 		store.createTask({
 			title: p.title,
 			group_id: group.id,
+			tags: scopeTags(p.tags),
 			priority: p.priority || (nav.scope === 'important' ? 3 : 0),
 			list_id: p.list_id ?? (scopeInfo.kind === 'list' ? scopeInfo.id : null),
 			due_date: p.due_date ?? (nav.scope === 'today' ? t : nav.scope === 'next7' ? addDays(t, 1) : null)
@@ -141,6 +208,7 @@
 		const t = todayISO();
 		store.createTask({
 			title: p.title,
+			tags: scopeTags(p.tags),
 			priority: p.priority || (nav.scope === 'important' ? 3 : 0),
 			list_id: p.list_id ?? (scopeInfo.kind === 'list' ? scopeInfo.id : null),
 			due_date: p.due_date ?? (nav.scope === 'today' ? t : nav.scope === 'next7' ? addDays(t, 1) : null)
@@ -181,13 +249,16 @@
 	<div class="flex min-h-0 w-full flex-1 flex-col px-4 pt-4">
 		<div class="flex items-center gap-2">
 			<div class="min-w-0 flex-1"><QuickInput onsubmit={add} placeholder={t('Aggiungi un task…   (!alta  @domani  #lista)')} /></div>
+			<button class="btn h-10 shrink-0" title={t('Nuovo task da un modello')} onclick={() => (ui.templatesOpen = true)}><LayoutTemplate size={16} />{t('Modello')}</button>
 			<button class="btn h-10 shrink-0" title={t('Nuovo gruppo')} onclick={() => (ui.groupEditor = 'new')}><FolderPlus size={16} />{t('Gruppo')}</button>
 		</div>
 		<div class="mt-3 min-h-0 flex-1 overflow-auto pb-24" data-scroll="y">
-			{#if items.length === 0 && doneRows.length === 0}
+			{#if (dateMode ? sections.length === 0 : items.length === 0) && doneRows.length === 0}
 				<div class="grid place-items-center gap-2 pt-24 text-center text-muted" in:mIn={{ y: 8 }}>
 					<Inbox size={36} strokeWidth={1.4} class="text-faint" />
-					<p>{t('Nessun task qui. Scrivine uno nella barra qui sopra.')}</p>
+					<p class="font-medium text-fg">{nav.scope === 'today' ? t('Niente in programma per oggi') : nav.scope === 'next7' ? t('Niente in programma nei prossimi 7 giorni') : t('Nessun task qui')}</p>
+					<p class="max-w-[360px] text-[12.5px]">{t('Scrivi un task nella barra qui sopra e premi Invio. Puoi usare !alta, @domani e #lista.')}</p>
+					<p class="text-[12px] text-faint">{t('Suggerimento: Ctrl+K per cercare, Ctrl+Z per annullare.')}</p>
 				</div>
 			{/if}
 			{#if dragging}
@@ -197,6 +268,29 @@
 					in:mIn={{ y: -6, duration: 0.18 }}
 				>{t('Sposta fuori dai gruppi (livello principale)')}</div>
 			{/if}
+			{#if dateMode}
+				{#each sections as sec (sec.key)}
+					<div class="mt-4 mb-1 flex items-baseline gap-2 px-2 first:mt-0" in:mIn|local={{ y: -6, duration: 0.22 }}>
+						<span class="text-[12px] font-semibold tracking-wide uppercase {sec.tone === 'late' ? 'text-p3' : sec.tone === 'today' ? 'text-accent' : 'text-muted'}">{sec.label}</span>
+						<span class="text-[11.5px] text-faint">
+							{sec.count === 1 ? t('1 attività') : t('{n} attività', { n: sec.count })}{#if sec.minutes > 0} · {fmtLoad(sec.minutes)} {t('pianificate')}{#if sec.untimed > 0}, {sec.untimed} {t('senza orario')}{/if}{/if}
+						</span>
+					</div>
+					{#each sec.rows as row (row.task.id)}
+						<div animate:flip={{ duration: 220 }} in:mIn|local={{ y: -6, duration: 0.22 }}>
+							<TaskRow
+								task={row.task}
+								depth={row.depth}
+								hasChildren={row.hasChildren}
+								num={row.num}
+								expanded={!collapsed.has(row.task.id)}
+								showList={true}
+								ontoggleexpand={() => (collapsed.has(row.task.id) ? collapsed.delete(row.task.id) : collapsed.add(row.task.id))}
+							/>
+						</div>
+					{/each}
+				{/each}
+			{:else}
 			{#each items as it (itemKey(it))}
 				<div animate:flip={{ duration: 220 }} in:mIn|local={{ y: -6, duration: 0.22 }}>
 					{#if it.kind === 'group'}
@@ -218,6 +312,7 @@
 							task={row.task}
 							depth={row.depth}
 							hasChildren={row.hasChildren}
+							num={row.num}
 							expanded={!collapsed.has(row.task.id)}
 							sortable={nav.sort === 'manual'}
 							showList={scopeInfo.kind !== 'list'}
@@ -230,6 +325,7 @@
 					{/if}
 				</div>
 			{/each}
+			{/if}
 
 			{#if doneCount > 0}
 				<button class="mt-5 mb-1 flex items-center gap-1.5 px-2 text-[12px] font-medium text-muted hover:text-fg" onclick={() => (showDone = !showDone)}>
@@ -239,7 +335,7 @@
 				{#if showDone}
 					{#each doneRows as row (row.task.id)}
 						<div animate:flip={{ duration: 220 }} in:mIn|local={{ y: -6, duration: 0.22 }}>
-							<TaskRow task={row.task} depth={row.depth} hasChildren={row.hasChildren} expanded={!collapsed.has(row.task.id)} showList={scopeInfo.kind !== 'list'}
+							<TaskRow task={row.task} depth={row.depth} hasChildren={row.hasChildren} num={row.num} expanded={!collapsed.has(row.task.id)} showList={scopeInfo.kind !== 'list'}
 								ontoggleexpand={() => (collapsed.has(row.task.id) ? collapsed.delete(row.task.id) : collapsed.add(row.task.id))} />
 						</div>
 					{/each}

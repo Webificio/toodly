@@ -52,6 +52,7 @@
 		{ value: 'status', label: tt('Stato') },
 		{ value: 'completed', label: tt('Completato') },
 		{ value: 'blocked', label: tt('In attesa (dipendenze)') },
+		{ value: 'tag', label: tt('Etichetta') },
 		{ value: 'title', label: tt('Titolo') }
 	]);
 	function ops(f: RuleField): { value: string; label: string }[] {
@@ -61,6 +62,7 @@
 			case 'priority': return [is, isnt, { value: '>=', label: tt('almeno') }, { value: '<=', label: tt('al massimo') }];
 			case 'due': case 'list': case 'status': return [is, isnt];
 			case 'completed': case 'blocked': return [is];
+			case 'tag': return [is, isnt];
 			default: return [{ value: 'contains', label: tt('contiene') }, { value: '!=', label: tt('non contiene') }];
 		}
 	}
@@ -79,13 +81,14 @@
 			case 'priority': return PRIORITIES.map((p) => ({ value: String(p.value), label: p.label, color: `var(--${p.cls})` }));
 			case 'list': return store.listsSorted.map((l) => ({ value: l.id, label: l.name, color: l.color }));
 			case 'status': return STATUSES.map((s) => ({ value: s.value as string, label: s.label }));
+			case 'tag': return store.tagList.map(([g]) => ({ value: g, label: '#' + g }));
 			case 'blocked':
 			case 'completed': return [{ value: 'true', label: tt('Sì') }, { value: 'false', label: tt('No') }];
 			default: return [];
 		}
 	}
 	function defaultValue(f: RuleField): string {
-		return f === 'priority' ? '3' : f === 'due' ? 'today' : f === 'list' ? (store.defaultListId ?? '') : f === 'status' ? 'todo' : f === 'completed' || f === 'blocked' ? 'false' : '';
+		return f === 'priority' ? '3' : f === 'due' ? 'today' : f === 'list' ? (store.defaultListId ?? '') : f === 'status' ? 'todo' : f === 'tag' ? (store.tagList[0]?.[0] ?? '') : f === 'completed' || f === 'blocked' ? 'false' : '';
 	}
 	function changeField(r: Rule, f: RuleField) {
 		r.field = f;

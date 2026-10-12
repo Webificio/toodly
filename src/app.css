@@ -3,6 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+	--row-py: 6px;
 	--bg: #fbfbfc;
 	--panel: #ffffff;
 	--sidebar: #f3f3f6;
@@ -15,9 +16,9 @@
 	--active: rgba(99, 102, 241, 0.13);
 	--accent: #6366f1;
 	--accent-fg: #ffffff;
-	--p3: #ef4444;
-	--p2: #f59e0b;
-	--p1: #3b82f6;
+	--p3: #dc2626;
+	--p2: #d97706;
+	--p1: #2563eb;
 	--p0: #9ca3af;
 	--shadow: 0 10px 40px -8px rgba(20, 20, 50, 0.22), 0 2px 8px rgba(20, 20, 50, 0.08);
 	color-scheme: light;
@@ -35,6 +36,9 @@
 	--active: rgba(129, 140, 248, 0.18);
 	--accent: #818cf8;
 	--accent-fg: #0e0f13;
+	--p3: #ef4444;
+	--p2: #f59e0b;
+	--p1: #3b82f6;
 	--p0: #6b7280;
 	--shadow: 0 14px 44px -8px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
 	color-scheme: dark;
@@ -157,6 +161,10 @@ select {
 .icon-btn:hover {
 	background: var(--hover);
 	color: var(--fg);
+}
+.icon-btn:disabled {
+	opacity: 0.35;
+	pointer-events: none;
 }
 .field {
 	height: 30px;
@@ -300,4 +308,11 @@ textarea.field {
 	border-top: 1px solid var(--border);
 	margin: 0.8em 0;
 }
+}
+
+[data-density='compact'] {
+	--row-py: 2px;
+}
+[data-density='comfy'] {
+	--row-py: 10px;
 }

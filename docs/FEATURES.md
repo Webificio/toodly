@@ -6,7 +6,7 @@
 
 ## Tasks
 
-Completion with a strike-through animation, a collapsible "Completed" section, 4 priorities (red / orange / blue / gray), collapsible hierarchical sub-tasks, **dependencies** between tasks (a task is "waiting" until its prerequisites are completed: padlock, dashed border and a "Waiting for…" badge in list, Kanban and calendar; no cycles; a "Waiting" rule is available in filters), drag & drop reordering, sorting by priority or due date, due date + start/end time, recurrence (daily, weekly, monthly, yearly: completing a task creates the next occurrence).
+Completion with a strike-through animation, a collapsible "Completed" section, 4 priorities (red / orange / blue / gray), collapsible hierarchical sub-tasks, **dependencies** between tasks (a task is "waiting" until its prerequisites are completed: padlock, dashed border and a "Waiting for…" badge in list, Kanban and calendar; no cycles; a "Waiting" rule is available in filters), drag & drop reordering, sorting by priority or due date, start date (default: creation day; never after the due date), due date + start/end time, recurrence (daily, weekly, monthly, yearly: completing a task creates the next occurrence).
 
 ## Details
 
@@ -14,6 +14,7 @@ Right-hand drawer: Markdown description (toolbar, Ctrl+B/I shortcuts, automatic 
 
 ## Views
 
+- **Gantt**: every task with a due date is a bar from its start date to its due date, over a timeline with day / week / month zoom and a "today" line. The left side keeps the groups → sub-groups → tasks → sub-tasks hierarchy (group open/closed state is shared with the List view); group rows show a summary bar (first start to last due date of their content). Bars can be dragged to move them, or resized from either end (day snapping); a click opens the task details; a double-click on the row of a task without a due date sets it. Dependencies are drawn as arrows (red when the prerequisite ends after the dependent task starts); bars show progress (completed, or share of completed sub-tasks), completed tasks are dimmed, waiting tasks have a dashed outline. Tasks without a due date have no bar. Each task has a **Show in Gantt** switch (task details; also an eye button on hover in the Gantt tree): excluded tasks keep their place in the hierarchy but shrink to a thin, faint row with no bar (they do not count in group summaries or arrows); the *Show excluded* toggle hides them completely. **Export**: the *Mermaid* button saves the Gantt as a Markdown file with a ```` ```mermaid gantt ```` diagram (a copy button puts it on the clipboard): groups and sub-groups become sections ("Group / Sub-group"), sub-tasks follow their parent with a ↳ prefix, and only tasks shown in the Gantt and with a due date are included (same scope and *Show completed* choice as the view); completed tasks are `done`, in-progress `active`, high-priority `crit` (logic in `src/lib/exportgantt.ts`). Scope "Today" / "Next 7 days" show everything, like the Calendar.
 - **List**, **Kanban** (by status or priority, drag & drop between columns), monthly and weekly **Calendar** with time-blocking (drag from the "Unscheduled" panel into the hourly grid; move and resize blocks; double-click to create).
 - Smart views: *Today*, *Next 7 days*, *Important*, *All*.
 - Colored **lists**. Every task always belongs to a list: each set has at least one list ("General" by default), which cannot be deleted if it is the last one; deleting a list moves its tasks to another one; tasks without a list coming from old or imported data are assigned to the default list.
@@ -31,15 +32,47 @@ Right-hand drawer: Markdown description (toolbar, Ctrl+B/I shortcuts, automatic 
 
 Quick Add and the "add" bar understand: `!high` `!medium` `!low`, `@today` `@tomorrow`, `#ListName` (the Italian forms `!alta` `!media` `!bassa`, `@oggi` `@domani` work as well).
 
+## Search, undo, reminders and statistics
+
+- **Global search** (`Ctrl/Cmd+K`): palette over titles and descriptions (accent- and case-insensitive, all words must match), filters by list and priority, optional completed tasks, keyboard navigation; picking a result opens the task's list and its details. With an empty query it shows recently modified tasks.
+- **Undo / redo** (`Ctrl+Z`, `Ctrl+Y` or `Ctrl+Shift+Z`, and header buttons): the last 100 operations (edits, completion, move, reorder, delete — also bulk ones, as a single step). Quick edits of the same field are merged. Deleting shows a "Task deleted · Undo" toast. Attachment files of deleted tasks stay on disk until the entry leaves the history or after 6 hours, so an undo restores them. History is per window and cleared when the data set changes.
+- **Reminders**: per-task "Reminder" (at start time, 5/10/15/30 min, 1/2 h, 1/2 days before). Tasks without a start time use the default time in Settings. A system notification is sent while toodly is running (tray included); a missed reminder is still delivered within 12 hours. Several windows do not duplicate notifications. Can be turned off in Settings.
+- **Today / Next 7 days** are split into *Overdue*, *Today*, *Tomorrow* and later days, each with task count, planned time (from start/end times) and number of untimed tasks.
+- **Statistics** (sidebar footer): completed in 7/30 days, open and overdue tasks, average creation→completion time, completed per week (last 8 weeks, chart or table), open tasks per list.
+- **Feedback**: a save indicator in the header (*Saving… / Saved / Save error*); if a write fails the data are reloaded and an error toast is shown.
+- **Detail panel** in collapsible sections (Organization, Planning, Description, Sub-tasks, Dependencies, Notes, Attachments); their open/closed state is remembered.
+- **First start**: short welcome tour (only on an empty data set; relaunchable from Settings → Getting started) and explanatory empty states.
+- Concurrency: the DB is opened with `busy_timeout` and column migrations ignore "duplicate column", so two windows starting together do not clash.
+
+## Tags, richer recurrence, shortcuts and appearance
+
+- **Tags**: free labels (`#tag`) orthogonal to lists and groups. In Quick Add and in the add bars `#word` is a list if it matches a list name, otherwise a tag; `+word` is always a tag. Tags are edited in the task details (chips, autocomplete), shown on rows and cards, listed in the sidebar (*Tags*, with open-task counts) where each one is a view (new tasks added there get the tag), searchable (`Ctrl+K`) and usable in filters (*Tag is / is not*). Stored lowercase, space separated, in the `tags` column.
+- **Recurrence**: besides daily/weekly/monthly/yearly there are *weekdays* (Mon–Fri), *last day of the month* and *specific days of the week* (e.g. Monday and Thursday), plus an optional **end date** ("Until"). Completing a task creates the next occurrence only if it falls on or before the end date; start date, reminder and sub-tasks shift by the same number of days, so the task keeps its duration.
+- **Keyboard**: `↑ / ↓` move between tasks, `Enter` edits the title, `Space` completes/reopens, `?` opens the shortcuts page (also in Settings).
+- **Appearance** (Settings): list density (compact / normal / comfortable) and interface size (90–125 %).
+- **Gantt, second iteration**: *milestones* (task switch "Milestone": a diamond on the due date, `milestone` in the Mermaid export); *critical path* toggle (the chain of dependencies without slack leading to the latest end date is outlined in red, the rest is dimmed); *late only* filter (overdue tasks and tasks starting before a prerequisite ends, with their parents); **create dependencies by dragging** from the round handle at the right end of a bar onto another bar (the target depends on the source; circular links are refused). Rows are rendered only around the visible area (virtualization) once there are more than ~120 rows.
+
+## Templates, attachments preview, backups and calendar export
+
+- **Templates**: *Save as template* (details panel) stores a task with all its sub-tasks; the *Template* button next to the add bar in the List view creates a new copy (undoable as a single step). Dates are saved as distances from the main task, so they follow the "reference date" you choose. Stored in `localStorage` (`toodly.templates`), hence valid for every data set and included in backups.
+- **Attachment preview**: the eye button on an attachment shows images, PDFs (where the web view supports it) and the start of text files inside the details panel (files up to 8 MB).
+- **Automatic backup** (Settings → Data): daily or weekly full `.zip` backup (same content as *Export all…*) into a chosen folder while toodly is running; only the latest 3/7/14/30 `toodly-auto-*.zip` files are kept. Settings are per computer (`toodly-internal.*`, not in backups); with several windows only one runs the backup.
+- **Calendar export**: *Export .ics…* writes the open tasks with a due date of the current set as iCalendar events (all-day or with start/end time; recurrence → `RRULE`, reminder → `VALARM`, tags → `CATEGORIES`).
+- **Accessibility**: Gantt bars and rows are keyboard-focusable (`Enter`/`Space` opens, `Alt+←/→` moves a bar by a day), darker priority colours in the light theme, animations are skipped when the system asks for reduced motion.
+
 ## Sidebar width
 
 The vertical line between the sidebar and the main area can be dragged to resize it (180–480 px); double-click resets it to 240 px. The width is stored **per window** (`sidebar` field in `windows.json`, together with position, size and maximized state) and restored when the window reopens; it is included in the layout of the export. Windows without their own value start from the old global preference `toodly.sidebarWidth`, if present.
 
 ## Groups and sub-groups
 
-Tree-like folders (table `task_groups`; `tasks.group_id`) independent from lists. In the List view a group is a collapsible header (state saved locally): sub-groups first, then the tasks of the same level. Create them with the "Group" button (or "New sub-group" on a header), edit/delete them from the editor (when deleting, tasks and sub-groups move up one level), drag tasks and groups onto headers to move them (a "top level" drop zone appears at the bottom while dragging). Also available from the task details (Group field) and the multi-selection bar. A group name is required and unique within the set (case-insensitive). Once created, groups are always shown, even when empty.
+Tree-like folders (table `task_groups`; `tasks.group_id`) independent from lists. In the List view a group is a collapsible header (open/closed state saved locally for each view of each data set, e.g. each list, and restored when it is shown again): sub-groups first, then the tasks of the same level. Create them with the "Group" button (or "New sub-group" on a header), edit/delete them from the editor (when deleting, tasks and sub-groups move up one level), drag tasks and groups onto headers to move them (a "top level" drop zone appears at the bottom while dragging). Also available from the task details (Group field) and the multi-selection bar. A group name is required and unique within the set (case-insensitive). Once created, groups are always shown, even when empty. Each header shows the number of open tasks (sub-groups included), followed by a red badge with the high-priority ones and an orange badge with the medium-priority ones, when there are any.
 
 ## Quick actions
+
+In the task details, small icon buttons next to the title change its capitalization (first letter only, Each Word, UPPERCASE, lowercase) or clear it; the title stays required, so leaving it empty restores the previous one.
+
+Settings has a switch that numbers the tasks in the list: a progressive number, in the accent (purple) color, between the checkbox and the title, counted among siblings at the same level (groups are not counted; sub-tasks restart from 1). It is stored locally (`toodly.showNumbers`) and shared by all windows.
 
 Hovering a task in the list shows, on the right, due date, priority and status (drop-down menus with the current value), then complete and delete (buttons with a confirmation modal, also in the multi-selection bar).
 

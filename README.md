@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-6b3fa0.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.1.0-6b3fa0.svg">
   <img alt="Tauri v2" src="https://img.shields.io/badge/Tauri-v2-24C8DB.svg?logo=tauri&logoColor=white">
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte-5-FF3E00.svg?logo=svelte&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg">
@@ -25,7 +25,7 @@ Add your images to docs/screenshots/ and uncomment:
 | ![List](docs/screenshots/list.png) | ![Kanban](docs/screenshots/kanban.png) | ![Calendar](docs/screenshots/calendar.png) |
 -->
 
-> **Status:** early release (1.0.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
+> **Status:** early release (1.1.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
 
 ## Download
 
@@ -37,6 +37,7 @@ You can also build them yourself, see [Building](#building).
 
 - **Tasks** with 4 priorities, hierarchical sub-tasks, **dependencies** ("waiting" until prerequisites are done), due date and start/end time, recurrence, drag & drop reordering.
 - **Views**: List, Kanban (by status or priority), monthly and weekly Calendar with time-blocking, smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
+- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt view with Mermaid export, statistics.
 - **Groups and sub-groups** (folders) independent from lists, multi-selection with bulk edits, bulk creation of tasks from pasted text or Markdown.
 - **Rich task details**: Markdown description, multiple notes, file attachments.
 - **Multi-window**: every window opens its own **data set**; position, size, sidebar width and view of each window are saved and restored on restart (multi-monitor aware).
@@ -53,12 +54,13 @@ The complete feature reference is in [docs/FEATURES.md](docs/FEATURES.md).
 |---|---|---|
 | [User guide](docs/USER_GUIDE.md) | Users | How to use toodly: tasks, views, windows, data sets, Quick Add, backup, shortcuts |
 | [Features](docs/FEATURES.md) | Users and developers | Detailed reference of every feature and its rules |
+| [Changelog](CHANGELOG.md) | Everyone | What changed in each version (also used as GitHub release notes) |
 | [Developer guide](docs/DEVELOPER.md) | Developers | Architecture, data model, frontend/backend contract, persistence files, conventions |
 | [Building](docs/BUILDING.md) | Developers | Build, installers per OS, CI, releasing |
 
 ## Tech stack
 
-Tauri v2 (Rust) · SvelteKit (SPA/SSG, Svelte 5) · Tailwind CSS v4 · bits-ui (headless components) · Motion One · SQLite (`tauri-plugin-sql`).
+Tauri v2 (Rust) · SvelteKit (SPA/SSG, Svelte 5) · Tailwind CSS v4 · bits-ui (headless components) · Motion One · SQLite (`tauri-plugin-sql`) · system notifications (`tauri-plugin-notification`).
 
 ## Getting started
 

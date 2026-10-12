@@ -62,6 +62,7 @@ pub fn run() {
     builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(
             // Lo schema è gestito dal frontend (src/lib/schema.ts) perché ogni finestra
             // ha un proprio file database con nome dinamico.
@@ -100,6 +101,7 @@ pub fn run() {
             windows::assign_dataset,
             windows::replace_layout,
             backup::export_zip,
+            backup::prune_backups,
             backup::read_backup,
             backup::extract_attachments,
             set_language,
@@ -109,6 +111,7 @@ pub fn run() {
             attachments::open_attachment,
             attachments::open_external,
             attachments::save_text_file,
+            attachments::read_attachment,
         ])
         .on_window_event(|window, event| {
             let app = window.app_handle();

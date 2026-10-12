@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { List as ListIcon, Columns3, CalendarDays, ArrowUpDown, ChevronLeft, ChevronRight, Check } from '@lucide/svelte';
+	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
-	import { nav, go } from '../nav.svelte';
+	import { nav, go, ui } from '../nav.svelte';
 	import { parseScope } from '../views';
 	import { addDays, addMonths, formatDayShort, formatMonth, startOfWeek, todayISO } from '../dates';
 
 	const modes = [
 		{ id: 'list', label: 'Lista', icon: ListIcon },
 		{ id: 'kanban', label: 'Kanban', icon: Columns3 },
-		{ id: 'calendar', label: 'Calendario', icon: CalendarDays }
+		{ id: 'calendar', label: 'Calendario', icon: CalendarDays },
+		{ id: 'gantt', label: 'Gantt', icon: ChartGantt }
 	] as const;
 	const sorts = [
 		{ id: 'manual', label: 'Manuale (trascina)', short: 'Manuale' },
@@ -22,8 +23,19 @@
 	const title = $derived.by(() => {
 		const s = parseScope(nav.scope);
 		if (s.kind === 'list') return store.listOf(s.id)?.name ?? t('Lista');
+		if (s.kind === 'tag') return '#' + s.id;
 		if (s.kind === 'filter') return store.filters.find((f) => f.id === s.id)?.name ?? t('Filtro');
 		return t(SMART[s.id] ?? 'toodly');
+	});
+
+	// indicatore di salvataggio: «Salvataggio…» durante le scritture, «Salvato» per un attimo, errore finché non si risolve
+	let justSaved = $state(false);
+	$effect(() => {
+		const at = store.savedAt;
+		if (!at) return;
+		justSaved = true;
+		const id = setTimeout(() => (justSaved = false), 2200);
+		return () => clearTimeout(id);
 	});
 
 	const rangeLabel = $derived.by(() => {
@@ -70,7 +82,7 @@
 					<button class="h-7 rounded-md px-2.5 text-[12.5px] font-medium {nav.group === id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}" onclick={() => go({ group: id === 'status' ? null : id })}>{t(label)}</button>
 				{/each}
 			</div>
-		{:else}
+		{:else if nav.mode === 'calendar'}
 			<div class="flex rounded-lg bg-hover p-0.5">
 				{#each [['week', 'Settimana'], ['month', 'Mese']] as [id, label]}
 					<button class="h-7 rounded-md px-2.5 text-[12.5px] font-medium {nav.cal === id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}" onclick={() => go({ cal: id })}>{t(label)}</button>
@@ -83,5 +95,20 @@
 				<span class="ml-1 min-w-36 text-[13px] font-semibold capitalize">{rangeLabel}</span>
 			</div>
 		{/if}
+
+		<div class="flex items-center gap-1 border-l border-border pl-2">
+			<span class="mr-1 flex min-w-[92px] items-center justify-end gap-1 text-[11.5px]" aria-live="polite">
+				{#if store.saveError}
+					<span class="flex items-center gap-1 text-p3"><CircleAlert size={13} />{t('Errore di salvataggio')}</span>
+				{:else if store.saving > 0}
+					<span class="flex items-center gap-1 text-muted"><LoaderCircle size={13} class="animate-spin" />{t('Salvataggio…')}</span>
+				{:else if justSaved}
+					<span class="flex items-center gap-1 text-faint"><Check size={13} />{t('Salvato')}</span>
+				{/if}
+			</span>
+			<button class="icon-btn" title={t('Cerca') + ' (Ctrl+K)'} aria-label={t('Cerca')} onclick={() => (ui.searchOpen = true)}><Search size={15} /></button>
+			<button class="icon-btn" title={t('Annulla azione') + ' (Ctrl+Z)'} aria-label={t('Annulla azione')} disabled={!store.undoStack.length} onclick={() => store.undo()}><Undo2 size={15} /></button>
+			<button class="icon-btn" title={t('Ripeti') + ' (Ctrl+Shift+Z)'} aria-label={t('Ripeti')} disabled={!store.redoStack.length} onclick={() => store.redo()}><Redo2 size={15} /></button>
+		</div>
 	</div>
 </header>

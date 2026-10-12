@@ -1,3 +1,4 @@
+import { normTag } from './tags';
 import { addDays, todayISO } from './dates';
 import type { List, Priority } from './types';
 
@@ -6,6 +7,7 @@ export interface QuickParsed {
 	priority: Priority;
 	due_date: string | null;
 	list_id: string | null;
+	tags: string[];
 }
 
 /**
@@ -13,8 +15,10 @@ export interface QuickParsed {
  *   !alta !media !bassa   priorità
  *   @oggi @domani         scadenza
  *   #NomeLista            lista (prefisso del nome, senza distinzione di maiuscole)
+ *   #etichetta +etichetta etichetta (con # solo se non corrisponde a una lista; con + sempre)
  */
-export function parseQuick(input: string, lists: List[]): QuickParsed {
+export function parseQuick(input: string, lists: List[], withTags = true): QuickParsed {
+	const tags: string[] = [];
 	let priority: Priority = 0;
 	let due: string | null = null;
 	let list_id: string | null = null;
@@ -31,8 +35,11 @@ export function parseQuick(input: string, lists: List[]): QuickParsed {
 			const q = lw.slice(1);
 			const found = lists.find((l) => l.name.toLowerCase().startsWith(q));
 			if (found) list_id = found.id;
+			else if (withTags && normTag(lw)) tags.push(normTag(lw));
 			else words.push(w);
+		} else if (withTags && lw.startsWith('+') && normTag(lw)) {
+			tags.push(normTag(lw));
 		} else words.push(w);
 	}
-	return { title: words.join(' ').trim(), priority, due_date: due, list_id };
+	return { title: words.join(' ').trim(), priority, due_date: due, list_id, tags: [...new Set(tags)] };
 }

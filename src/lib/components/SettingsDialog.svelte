@@ -10,6 +10,15 @@
 	import { quitApp } from '../windowing';
 	import { t as tt, i18n, setLang, type Lang } from '../i18n.svelte';
 	import Select from './Select.svelte';
+	import { uiprefs, setDensity, setTextScale, setShowNumbers, setRemindersEnabled, setAllDayTime } from '../uiprefs.svelte';
+	import { testNotification } from '../reminders.svelte';
+
+	const densityOptions = $derived([
+		{ value: 'compact', label: tt('Compatta') },
+		{ value: 'normal', label: tt('Normale') },
+		{ value: 'comfy', label: tt('Comoda') }
+	]);
+	const scaleOptions = [90, 100, 110, 125].map((v) => ({ value: String(v), label: v + '%' }));
 
 	let open = $state(false);
 	let autostart = $state(false);
@@ -84,6 +93,67 @@
 		<section class="flex items-center gap-3">
 			<div class="flex-1 font-medium">{tt('Lingua')}</div>
 			<div class="w-40"><Select value={i18n.lang} options={languages} onchange={(v) => setLang(v as Lang)} /></div>
+		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1 font-medium">{tt('Densità della lista')}</div>
+			<div class="w-40"><Select value={uiprefs.density} options={densityOptions} onchange={(v) => setDensity(v as 'compact' | 'normal' | 'comfy')} /></div>
+		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1 font-medium">{tt("Dimensione dell'interfaccia")}</div>
+			<div class="w-40"><Select value={String(uiprefs.textScale)} options={scaleOptions} onchange={(v) => setTextScale(Number(v))} /></div>
+		</section>
+
+		<section class="space-y-2">
+			<div class="flex items-center gap-3">
+				<div class="flex-1">
+					<div class="font-medium">{tt('Notifiche dei promemoria')}</div>
+					<div class="text-[12px] text-muted">{tt('Una notifica di sistema all\'ora del promemoria dei task (finché toodly è in esecuzione, anche nel tray).')}</div>
+				</div>
+				<Switch.Root
+					checked={uiprefs.remindersEnabled}
+					onCheckedChange={setRemindersEnabled}
+					class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
+				>
+					<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+				</Switch.Root>
+			</div>
+			<div class="flex items-center gap-3">
+				<div class="flex-1 text-[12.5px]">{tt('Ora predefinita per i task senza orario')}</div>
+				<input type="time" class="field w-28" value={uiprefs.allDayTime} onchange={(e) => setAllDayTime(e.currentTarget.value)} />
+				<button class="btn" onclick={testNotification}>{tt('Prova')}</button>
+			</div>
+		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1">
+				<div class="font-medium">{tt('Numera i task nella lista')}</div>
+				<div class="text-[12px] text-muted">{tt('Mostra un numero progressivo per i task dello stesso livello (i gruppi non contano).')}</div>
+			</div>
+			<Switch.Root
+				checked={uiprefs.showNumbers}
+				onCheckedChange={setShowNumbers}
+				class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
+			>
+				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+			</Switch.Root>
+		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1">
+				<div class="font-medium">{tt('Scorciatoie da tastiera')}</div>
+				<div class="text-[12px] text-muted">{tt('Elenco dei comandi da tastiera (anche con ?).')}</div>
+			</div>
+			<button class="btn" onclick={() => { ui.settingsOpen = false; ui.shortcutsOpen = true; }}>{tt('Mostra')}</button>
+		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1">
+				<div class="font-medium">{tt('Guida introduttiva')}</div>
+				<div class="text-[12px] text-muted">{tt('Rivedi il breve tour delle funzioni principali.')}</div>
+			</div>
+			<button class="btn" onclick={() => { ui.settingsOpen = false; ui.tourOpen = true; }}>{tt('Mostra')}</button>
 		</section>
 
 		<section class="flex items-center gap-3">

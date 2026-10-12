@@ -65,7 +65,11 @@ export async function exportAll(): Promise<{ path: string; datasets: number; tas
 		filters: [{ name: 'ZIP', extensions: ['zip'] }]
 	});
 	if (!dest) return null;
+	return writeBackup(dest);
+}
 
+/** Scrive il backup completo in `dest` (percorso già scelto). */
+async function writeBackup(dest: string): Promise<{ path: string; datasets: number; tasks: number; files: number }> {
 	const sets = await listDatasets();
 	const wins = await invoke<WinState[]>('list_windows');
 
@@ -274,4 +278,17 @@ export function backupErrorText(e: unknown): string {
 		default:
 			return m;
 	}
+}
+
+/** Backup automatico: salva `toodly-auto-<data>.zip` in `dir` e tiene solo gli ultimi `keep` file automatici. */
+export async function autoBackupTo(dir: string, keep: number) {
+	const sep = dir.includes('\\') ? '\\' : '/';
+	const dest = dir.replace(/[\\/]+$/, '') + sep + `toodly-auto-${stamp()}.zip`;
+	const r = await writeBackup(dest);
+	try {
+		await invoke('prune_backups', { dir, keep });
+	} catch (e) {
+		console.error('pulizia vecchi backup non riuscita', e);
+	}
+	return r;
 }

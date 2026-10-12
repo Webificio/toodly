@@ -2,7 +2,8 @@ import { t } from './i18n.svelte';
 
 export type Priority = 0 | 1 | 2 | 3; // 0 nessuna, 1 bassa, 2 media, 3 alta
 export type Status = 'todo' | 'doing' | 'done';
-export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+/** 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays' | 'monthend' | 'dow:1,4' (giorni della settimana, 0 = domenica) */
+export type Recurrence = string;
 
 export interface Task {
 	id: string;
@@ -15,10 +16,16 @@ export interface Task {
 	completed_at: string | null;
 	priority: Priority;
 	status: Status;
+	remind_min: number | null; // promemoria: minuti prima dell'inizio (null = nessuno)
+	tags: string[]; // etichette (minuscole, senza spazi)
+	milestone: boolean; // traguardo: nel Gantt è un rombo sulla scadenza
+	in_gantt: boolean; // false: nel Gantt resta una riga sottile, senza barra
+	start_date: string | null; // YYYY-MM-DD, inizio (Gantt); null = data di creazione
 	due_date: string | null; // YYYY-MM-DD
 	start_time: string | null; // HH:MM
 	end_time: string | null; // HH:MM
 	recurrence: Recurrence;
+	recur_until: string | null; // ultima data utile della ripetizione
 	sort: number;
 	created_at: string;
 	updated_at: string;
@@ -62,7 +69,7 @@ export interface Dep {
 	created_at: string;
 }
 
-export type RuleField = 'priority' | 'due' | 'list' | 'status' | 'completed' | 'title' | 'blocked';
+export type RuleField = 'priority' | 'due' | 'list' | 'status' | 'completed' | 'title' | 'blocked' | 'tag';
 export interface Rule {
 	field: RuleField;
 	op: string;
@@ -77,7 +84,7 @@ export interface Filter {
 	created_at: string;
 }
 
-export type Mode = 'list' | 'kanban' | 'calendar';
+export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt';
 export type SortMode = 'manual' | 'priority' | 'due';
 
 export const PRIORITIES: { value: Priority; label: string; cls: string }[] = [
@@ -98,6 +105,8 @@ export const RECURRENCES: { value: Recurrence; label: string }[] = [
 	{ value: 'daily', get label() { return t('Ogni giorno'); } },
 	{ value: 'weekly', get label() { return t('Ogni settimana'); } },
 	{ value: 'monthly', get label() { return t('Ogni mese'); } },
+	{ value: 'weekdays', get label() { return t('Nei giorni feriali'); } },
+	{ value: 'monthend', get label() { return t('Ultimo giorno del mese'); } },
 	{ value: 'yearly', get label() { return t('Ogni anno'); } }
 ];
 

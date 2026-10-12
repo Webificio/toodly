@@ -31,7 +31,7 @@ If you already have several data sets, toodly asks which one to open in each new
 ## 2. The window
 
 - **Sidebar (left)**: smart views (*Today*, *Next 7 days*, *Important*, *All tasks*), your **Lists**, your **Filters**, and the buttons for settings, a new window and bulk import. Drag the thin line between the sidebar and the main area to resize it (double-click to reset). Each window remembers its own sidebar width.
-- **Header**: the view switcher (*List*, *Kanban*, *Calendar*), sorting and grouping options, and the calendar navigation.
+- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*), sorting and grouping options, and the calendar navigation.
 - **Main area**: your tasks in the selected view.
 - **Detail panel (right)**: opens when you click a task. Click outside it, or press **Esc**, to close it.
 
@@ -68,9 +68,11 @@ Click the checkbox. Completed tasks move to the collapsible **Completed** sectio
 
 Click a task to open it. You can edit:
 
-- **Title** and **Status** (*To Do*, *In Progress*, *Done*).
+- **Title** and **Status** (*To Do*, *In Progress*, *Done*). Next to the title, small buttons change its capitalization (first letter only, Each Word, UPPERCASE, lowercase) or clear it. The title is required: if you leave it empty, the previous one is restored.
 - **Priority**: *High*, *Medium*, *Low*, *None* (shown in red, orange, blue and gray).
-- **Due date** and **Time** (start and end; the end must be after the start).
+- **Gantt**: a switch to show or hide the task in the Gantt view.
+- **Start** (defaults to the day the task was created; it cannot be after the due date) and **Due date**. Moving the due date before the start moves the start with it.
+- **Time** (start and end; the end must be after the start).
 - **Repeat**: does not repeat, every day, week, month or year. When you complete the task, the next occurrence is created with the dates shifted.
 - **Description**, written in Markdown with a toolbar: bold (`Ctrl+B`), italic (`Ctrl+I`), strikethrough, headings, bulleted and numbered lists, checklists (clickable in the preview), quotes, code, and ready-made **templates** (steps, pros/cons, meeting notes, code block). Lists continue automatically when you press Enter. Use **Preview** to see the result.
 - **Subtasks**: add as many as you like; they can be nested and collapsed.
@@ -100,6 +102,21 @@ Switch between **Week** and **Month** with the header buttons and move with *Pre
 - In the week view you can do **time-blocking**: drag a task from the **Unscheduled** panel into the hourly grid to set its day and time, drag blocks to move them, drag the bottom edge to resize them, and **double-click** an empty slot to create a task.
 - In the month view tasks appear on their due day.
 
+### Gantt
+
+A timeline of your tasks. On the left you see the same hierarchy as the List (groups, sub-groups, tasks and sub-tasks; open and closed groups are the same as in the List); on the right each task with a due date is a **bar from its start date to its due date**.
+
+- **Zoom**: *Days*, *Weeks* or *Months*; **Today** centers the timeline on the current day (the vertical line).
+- **Click** a bar or a row to open the task details, exactly as in the List.
+- **Drag** a bar to move it (start and due date shift together), or drag its left / right edge to change only the start or the due date. Changes snap to whole days.
+- A task **without a due date** has no bar: **double-click** its row on the timeline to set the due date on that day.
+- Group rows show a **summary bar** from the earliest start to the latest due date of what they contain.
+- **Dependencies** are drawn as arrows from the prerequisite to the waiting task; an arrow turns red when the prerequisite ends after the dependent task starts.
+- A bar is filled in proportion to the work done (completed tasks fully; tasks with sub-tasks by the share of completed sub-tasks). Completed tasks are dimmed, waiting tasks have a dashed outline. *Show completed* hides or shows completed tasks.
+- **Show in Gantt**: each task has a switch in the detail panel (or use the eye button that appears on hover in the Gantt tree). A task that is not shown keeps its place in the hierarchy but becomes a **thin, faint row without a bar**; untick *Show excluded* to hide those rows completely.
+- **Export to Mermaid**: the *Mermaid* button saves the whole Gantt as a Markdown file with a `mermaid` diagram, and the copy button puts the same text on the clipboard. Groups become sections, sub-tasks follow their parent, and only tasks that are shown in the Gantt and have a due date are included.
+- The Gantt follows the selected list or filter; with *Today* and *Next 7 days* it shows all tasks, like the Calendar.
+
 ### Smart views
 
 - **Today**: tasks due today, plus overdue ones.
@@ -121,6 +138,8 @@ Groups are folders (and sub-folders) that organize tasks inside the List view, i
 - Click a header to collapse or expand it.
 - Drag tasks onto a group header to move them there; drop them on the **Top level** zone that appears while dragging to take them out of any group. You can also change the group from the detail panel or from the selection bar.
 - Groups are always shown, even when empty. Names must be unique.
+- Open and closed groups are remembered separately for each list (or other view) of each data set, and restored when you come back to it.
+- Each group header shows the number of open tasks it contains (sub-groups included), then a red badge with the high-priority ones and an orange badge with the medium-priority ones, when present.
 - Deleting a group does **not** delete its tasks and sub-groups: they move up one level.
 
 ### Filters
@@ -204,6 +223,19 @@ In **Settings → Data**:
 
 Files that are not toodly backups, or that come from a newer, unsupported version, are rejected with a message.
 
+### Automatic backup
+
+In **Settings → Data → Automatic backup** choose how often (daily/weekly), the folder and how many backups to keep, then *Run now* to test it. Backups are made while toodly is running (tray included), at most one at a time even with several windows open. Files are called `toodly-auto-<date>.zip`; older ones are deleted automatically (only files with that name).
+
+### Calendar export (.ics)
+
+**Settings → Data → External calendar → Export .ics…** creates a file you can import in Google Calendar, Outlook or Apple Calendar with the tasks of the current set that have a due date. It is a one-way snapshot: export again to refresh it.
+
+### Templates and previews
+
+- Open a task and click the template icon in the top bar of the panel to **save it as a template** (with its sub-tasks). In the List view the **Template** button lists your templates: pick a reference date and *Use*.
+- The eye icon next to an attachment shows a preview (images, PDF, text) without leaving toodly.
+
 ### Delete all data
 
 **Settings → Delete all data → Delete…** permanently removes every data set, task, attachment and local preference. One window with an empty "Main data" set remains. The language is kept. Export a backup first if you might need anything.
@@ -214,6 +246,7 @@ Open **Settings** from the sidebar.
 
 - **Appearance**: *Light*, *Dark* or *System*.
 - **Language**: Italian or English (shared by all windows; also changes the tray menu).
+- **Number tasks in the list**: shows a progressive number (purple) between the checkbox and the title of each task, counted among the tasks of the same level; groups are not counted and sub-tasks restart from 1.
 - **Launch toodly at system startup**.
 - **Shortcuts**: a reminder of the main shortcuts.
 - **Data**: manage data sets, export, import, delete everything.
@@ -229,10 +262,33 @@ Open **Settings** from the sidebar.
 | `Ctrl/Cmd + A` | Select all visible tasks |
 | `Ctrl/Cmd + click` | Add or remove a task from the selection |
 | `Shift + click` | Select a range of tasks |
+| `?` | Show the keyboard shortcuts |
+| `↑` / `↓` | Previous / next task |
+| `Enter` / `Space` | Edit the title / complete or reopen the selected task |
+| `Ctrl/Cmd + K` | Search tasks |
+| `Ctrl/Cmd + Z` | Undo the last operation |
+| `Ctrl + Y` / `Ctrl/Cmd + Shift + Z` | Redo |
 | `Esc` | Clear the selection, or close the detail panel |
 | `Enter` | Add the task you typed |
 | `Ctrl + Enter` | Save a note |
 | `Ctrl/Cmd + B` / `Ctrl/Cmd + I` | Bold / italic in the description |
+
+### Search, undo and reminders
+
+- **Search**: press `Ctrl+K` (or the magnifier in the header), type, narrow by list or priority, use ↑ ↓ and Enter to open a task.
+- **Undo**: `Ctrl+Z` reverts the last operations, even deletions; right after deleting you can click *Undo* in the notice. `Ctrl+Y` redoes.
+- **Reminders**: open a task and choose *Reminder* (it needs a due date; without a start time the default time from Settings is used). Allow notifications if the system asks. Notifications arrive while toodly is running, also in the tray.
+- **Statistics**: the chart icon at the bottom of the sidebar.
+- **Tour**: Settings → *Getting started* shows the welcome tour again.
+
+### Tags and recurrence
+
+- Type `#word` or `+word` when adding a task to give it a tag (`#word` is a list if a list starts with that word). Add or remove tags in the detail panel; click a tag in the sidebar to see its tasks.
+- *Recurrence* in the detail panel offers weekdays, last day of the month and "Days of the week…" (pick the days); *Until* stops the repetition after that date.
+
+### Gantt extras
+
+Turn on **Milestone** in a task to show it as a diamond. *Critical path* highlights what determines the end date, *Late only* shows what is overdue or blocked by a late prerequisite. To link two tasks, drag from the round handle at the right end of a bar and drop it on another bar: the second task will depend on the first.
 
 ## 14. Where your data is stored
 

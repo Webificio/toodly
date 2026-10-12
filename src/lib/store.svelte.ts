@@ -1,7 +1,8 @@
+import { parseTags, joinTags, uniqTags } from './tags';
 import { t as tl } from './i18n.svelte';
 import { invoke } from '@tauri-apps/api/core';
 import { exec, select } from './db';
-import { nextOccurrence } from './dates';
+import { addDays, diffDays, nextOccurrence, taskStart, todayISO } from './dates';
 import { nowISO, uid } from './ids';
 import { notifyDataChanged } from './windowing';
 import { showToast } from './nav.svelte';
@@ -9,12 +10,51 @@ import { compareManual, sortBetween } from './views';
 import { LIST_COLORS } from './types';
 import type { Attachment, Dep, Filter, Group, List, Note, Priority, Rule, Status, Task } from './types';
 
-type TaskRow = Omit<Task, 'completed'> & { completed: number };
+/** Operazione annullabile: `undo` e `redo` non registrano nulla di nuovo. */
+interface UndoEntry {
+	label: string;
+	/** voci consecutive con la stessa chiave (stesso task e campi) entro poco tempo si fondono */
+	key?: string;
+	at: number;
+	undo: () => Promise<void>;
+	redo: () => Promise<void>;
+	/** id di task eliminati i cui allegati su disco vanno cancellati quando la voce esce dallo storico */
+	purgeIds?: string[];
+}
+let ui_selectionHook: ((ids: string[]) => void) | null = null;
+/** Registrato dall'app: chiamato quando dei task spariscono (pulisce selezione e pannello di dettaglio). */
+export function onTasksRemoved(fn: (ids: string[]) => void) {
+	ui_selectionHook = fn;
+}
+const UNDO_LIMIT = 100;
+const COALESCE_MS = 1500;
+/** Allegati di task eliminati, in attesa di essere cancellati dal disco (si può ancora annullare). */
+const PURGE_KEY = 'toodly-internal.pendingPurge';
+const PURGE_AFTER_MS = 6 * 3600 * 1000;
+function readPurge(): Record<string, number> {
+	try {
+		return JSON.parse(localStorage.getItem(PURGE_KEY) ?? '{}') ?? {};
+	} catch {
+		return {};
+	}
+}
+function writePurge(m: Record<string, number>) {
+	try {
+		localStorage.setItem(PURGE_KEY, JSON.stringify(m));
+	} catch {}
+}
+const FIELD_LABELS: Record<string, string> = {
+	title: 'Titolo', description: 'Descrizione', completed: 'Completamento', priority: 'Priorità', status: 'Stato',
+	due_date: 'Scadenza', start_date: 'Inizio', start_time: 'Orario', end_time: 'Orario', recurrence: 'Ripetizione',
+	list_id: 'Lista', group_id: 'Gruppo', parent_id: 'Posizione', sort: 'Ordine', in_gantt: 'Gantt', remind_min: 'Promemoria', tags: 'Etichette', recur_until: 'Ripetizione', milestone: 'Traguardo'
+};
+
+type TaskRow = Omit<Task, 'completed' | 'in_gantt' | 'tags' | 'milestone'> & { completed: number; in_gantt: number | null; tags: string | null; milestone: number | null };
 type FilterRow = Omit<Filter, 'rules'> & { rules: string };
 
 const TASK_COLUMNS = [
 	'list_id', 'group_id', 'parent_id', 'title', 'description', 'completed', 'completed_at', 'priority', 'status',
-	'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'updated_at'
+	'in_gantt', 'milestone', 'tags', 'recur_until', 'remind_min', 'start_date', 'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'updated_at'
 ] as const;
 
 class Store {
@@ -29,6 +69,12 @@ class Store {
 
 	byId = $derived(new Map(this.tasks.map((t) => [t.id, t])));
 	/** Task "in attesa": hanno almeno un prerequisito non ancora completato. */
+	/** Etichette in uso (con il numero di task aperti), in ordine alfabetico. */
+	tagList = $derived.by(() => {
+		const m = new Map<string, number>();
+		for (const t of this.tasks) for (const g of t.tags) m.set(g, (m.get(g) ?? 0) + (t.completed ? 0 : 1));
+		return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+	});
 	blockedIds = $derived.by(() => {
 		const set = new Set<string>();
 		for (const d of this.deps) {
@@ -46,20 +92,139 @@ class Store {
 
 	private queue: Promise<unknown> = Promise.resolve();
 
+	/** Scritture in corso / ultimo esito (indicatore di salvataggio nell'intestazione). */
+	saving = $state(0);
+	saveError = $state(false);
+	savedAt = $state(0);
+
 	/** Serializza le scritture sul DB per mantenere l'ordine delle operazioni. */
 	private write<T>(fn: () => Promise<T>): Promise<T> {
+		this.saving++;
 		const p = this.queue.then(fn, fn);
 		this.queue = p.catch(() => {});
-		return p
-			.then((r) => {
+		return p.then(
+			(r) => {
+				this.saving--;
+				this.saveError = false;
+				this.savedAt = Date.now();
 				notifyDataChanged();
 				return r;
-			})
-			.catch((e) => {
+			},
+			(e) => {
+				this.saving--;
+				this.saveError = true;
 				console.error('[toodly] errore di scrittura', e);
+				showToast(tl('Salvataggio non riuscito: i dati sono stati ricaricati'));
 				this.reload();
 				throw e;
-			});
+			}
+		);
+	}
+
+	// ----- Annulla / Ripeti ----------------------------------------------------
+
+	undoStack = $state<UndoEntry[]>([]);
+	redoStack = $state<UndoEntry[]>([]);
+	private replaying = false;
+	private batchOps: UndoEntry[] | null = null;
+
+	private record(entry: Omit<UndoEntry, 'at'>) {
+		if (this.replaying) return;
+		const e: UndoEntry = { ...entry, at: Date.now() };
+		if (this.batchOps) {
+			this.batchOps.push(e);
+			return;
+		}
+		const top = this.undoStack[this.undoStack.length - 1];
+		if (top && e.key && top.key === e.key && e.at - top.at < COALESCE_MS && !this.redoStack.length) {
+			// modifiche ravvicinate dello stesso campo: un solo passo, dal valore iniziale all'ultimo
+			top.redo = e.redo;
+			top.at = e.at;
+			return;
+		}
+		this.undoStack.push(e);
+		this.redoStack = [];
+		while (this.undoStack.length > UNDO_LIMIT) this.finalize(this.undoStack.shift());
+	}
+	private finalize(e?: UndoEntry) {
+		if (!e?.purgeIds?.length) return;
+		const m = readPurge();
+		for (const id of e.purgeIds) {
+			delete m[id];
+			invoke('delete_task_attachments', { taskId: id }).catch(() => {});
+		}
+		writePurge(m);
+	}
+
+	/** Raggruppa più operazioni in un solo passo annullabile (con `toast` mostra «… · Annulla»). */
+	async batch<T>(label: string, fn: () => Promise<T>, toast = false): Promise<T> {
+		if (this.batchOps || this.replaying) return fn();
+		this.batchOps = [];
+		try {
+			return await fn();
+		} finally {
+			const ops = this.batchOps ?? [];
+			this.batchOps = null;
+			if (ops.length) {
+				const purgeIds = ops.flatMap((o) => o.purgeIds ?? []);
+				this.record({
+					label,
+					purgeIds,
+					undo: async () => {
+						for (const o of [...ops].reverse()) await o.undo();
+					},
+					redo: async () => {
+						for (const o of ops) await o.redo();
+					}
+				});
+				if (toast) showToast(label, { label: tl('Annulla azione'), run: () => this.undo() }, 7000);
+			}
+		}
+	}
+
+	async undo() {
+		const e = this.undoStack.pop();
+		if (!e) return showToast(tl('Niente da annullare'));
+		await this.replay(e, 'undo');
+		this.redoStack.push(e);
+		showToast(`${tl('Annullato')}: ${e.label}`, { label: tl('Ripeti'), run: () => this.redo() }, 5000);
+	}
+	async redo() {
+		const e = this.redoStack.pop();
+		if (!e) return showToast(tl('Niente da ripetere'));
+		await this.replay(e, 'redo');
+		this.undoStack.push(e);
+	}
+	private async replay(e: UndoEntry, dir: 'undo' | 'redo') {
+		this.replaying = true;
+		try {
+			await e[dir]();
+		} catch (err) {
+			console.error('[toodly] annulla/ripeti', err);
+			showToast(tl('Operazione non riuscita'));
+		} finally {
+			this.replaying = false;
+		}
+	}
+
+	clearHistory() {
+		this.undoStack = [];
+		this.redoStack = [];
+	}
+
+	/** Cancella dal disco gli allegati di task eliminati da tempo (si chiama all'avvio). */
+	purgeOldAttachments() {
+		const m = readPurge();
+		const now = Date.now();
+		let changed = false;
+		for (const [id, at] of Object.entries(m)) {
+			if (now - at > PURGE_AFTER_MS) {
+				invoke('delete_task_attachments', { taskId: id }).catch(() => {});
+				delete m[id];
+				changed = true;
+			}
+		}
+		if (changed) writePurge(m);
 	}
 
 	async reload() {
@@ -74,7 +239,7 @@ class Store {
 		]);
 		this.lists = lists;
 		this.groups = groups;
-		this.tasks = tasks.map((t) => ({ ...t, completed: !!t.completed }));
+		this.tasks = tasks.map((t) => ({ ...t, completed: !!t.completed, in_gantt: t.in_gantt == null ? true : !!t.in_gantt, tags: parseTags(t.tags), milestone: !!t.milestone }));
 		this.notes = notes;
 		this.attachments = attachments;
 		this.filters = filters.map((f) => ({ ...f, rules: safeRules(f.rules) }));
@@ -165,10 +330,20 @@ class Store {
 			completed_at: null,
 			priority: (input.priority ?? 0) as Priority,
 			status: input.status ?? 'todo',
+			// inizio = data di inserimento (o quella indicata), mai dopo la scadenza
+			in_gantt: input.in_gantt ?? true,
+			tags: uniqTags(input.tags),
+			milestone: input.milestone ?? false,
+			remind_min: input.remind_min ?? null,
+			start_date: (() => {
+				const s = input.start_date ?? todayISO();
+				return input.due_date && input.due_date < s ? input.due_date : s;
+			})(),
 			due_date: input.due_date ?? null,
 			start_time: input.start_time ?? null,
 			end_time: input.end_time ?? null,
 			recurrence: input.recurrence ?? 'none',
+			recur_until: input.recur_until ?? null,
 			sort: input.sort ?? Date.now(),
 			created_at: now,
 			updated_at: now
@@ -178,6 +353,12 @@ class Store {
 			task.completed_at = now;
 		}
 		this.tasks.push(task);
+		const snap = { ...task };
+		this.record({
+			label: parent ? tl('Nuovo sotto-task') : tl('Nuovo task'),
+			undo: () => this.removeRaw([task.id]),
+			redo: () => this.restoreRaw({ tasks: [snap], notes: [], attachments: [], deps: [] })
+		});
 		await this.write(() => this.insertTask(task));
 		return this.byId.get(task.id) ?? task;
 	}
@@ -185,15 +366,34 @@ class Store {
 	private insertTask(t: Task) {
 		return exec(
 			`INSERT INTO tasks (id, list_id, group_id, parent_id, title, description, completed, completed_at, priority, status,
-			 due_date, start_time, end_time, recurrence, sort, created_at, updated_at)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+			 in_gantt, milestone, tags, recur_until, remind_min, start_date, due_date, start_time, end_time, recurrence, sort, created_at, updated_at)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
 			[t.id, t.list_id, t.group_id, t.parent_id, t.title, t.description, t.completed ? 1 : 0, t.completed_at, t.priority,
-				t.status, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.created_at, t.updated_at]
+				t.status, t.in_gantt ? 1 : 0, t.milestone ? 1 : 0, joinTags(t.tags), t.recur_until, t.remind_min, t.start_date, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.created_at, t.updated_at]
 		);
 	}
 
 	/** Aggiornamento ottimistico: UI subito, DB in coda. */
 	async updateTask(id: string, patch: Partial<Task>) {
+		const t = this.byId.get(id);
+		if (!t) return;
+		// la scadenza spostata prima dell'inizio trascina con sé l'inizio (mai un intervallo invertito)
+		if (patch.due_date && !('start_date' in patch) && taskStart(t) > patch.due_date) patch = { ...patch, start_date: patch.due_date };
+		const fields = Object.keys(patch) as (keyof Task)[];
+		const before: Partial<Task> = {};
+		for (const k of fields) (before as Record<string, unknown>)[k] = t[k];
+		const after = { ...patch };
+		this.record({
+			label: tl(FIELD_LABELS[fields[0]] ?? 'Modifica'),
+			key: 'upd:' + id + ':' + [...fields].sort().join(','),
+			undo: () => this.applyPatch(id, before),
+			redo: () => this.applyPatch(id, after)
+		});
+		await this.applyPatch(id, patch);
+	}
+
+	/** Applica la modifica (ottimistica) e la scrive nel DB, senza registrarla nello storico. */
+	private async applyPatch(id: string, patch: Partial<Task>) {
 		const t = this.byId.get(id);
 		if (!t) return;
 		const full: Partial<Task> = { ...patch, updated_at: nowISO() };
@@ -202,6 +402,7 @@ class Store {
 		const sets = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
 		const vals = keys.map((k) => {
 			const v = (full as Record<string, unknown>)[k];
+			if (Array.isArray(v)) return joinTags(v as string[]);
 			return typeof v === 'boolean' ? (v ? 1 : 0) : v;
 		});
 		await this.write(() => exec(`UPDATE tasks SET ${sets} WHERE id = $1`, [id, ...vals]));
@@ -218,22 +419,30 @@ class Store {
 			}
 		}
 		const now = nowISO();
-		await this.updateTask(id, {
-			completed: value,
-			completed_at: value ? now : null,
-			status: value ? 'done' : 'todo'
-		});
-		if (value) {
-			// completare un task completa anche le sue sotto-attività
-			for (const c of this.descendants(id)) {
-				if (!c.completed) await this.updateTask(c.id, { completed: true, completed_at: now, status: 'done' });
+		await this.batch(value ? tl('Completato') : tl('Riaperto'), async () => {
+			await this.updateTask(id, {
+				completed: value,
+				completed_at: value ? now : null,
+				status: value ? 'done' : 'todo'
+			});
+			if (value) {
+				// completare un task completa anche le sue sotto-attività
+				for (const c of this.descendants(id)) {
+					if (!c.completed) await this.updateTask(c.id, { completed: true, completed_at: now, status: 'done' });
+				}
+				if (t.recurrence !== 'none' && t.due_date) await this.spawnNextOccurrence(t);
 			}
-			if (t.recurrence !== 'none' && t.due_date) await this.spawnNextOccurrence(t);
-		}
+		});
 	}
 
 	private async spawnNextOccurrence(t: Task) {
-		const shift = (d: string | null) => (d ? nextOccurrence(d, t.recurrence) : d);
+		if (!t.due_date) return;
+		const nextDue = nextOccurrence(t.due_date, t.recurrence);
+		// finita la ripetizione (o regola non valida): niente nuova occorrenza
+		if (nextDue === t.due_date || (t.recur_until && nextDue > t.recur_until)) return;
+		const delta = diffDays(nextDue, t.due_date);
+		// le altre date scorrono dello stesso numero di giorni: la durata del task resta invariata
+		const shift = (d: string | null) => (d ? addDays(d, delta) : d);
 		const next = await this.createTask({
 			list_id: t.list_id,
 			group_id: t.group_id,
@@ -241,10 +450,16 @@ class Store {
 			title: t.title,
 			description: t.description,
 			priority: t.priority,
+			in_gantt: t.in_gantt,
+			milestone: t.milestone,
+			tags: [...t.tags],
+			remind_min: t.remind_min,
+			start_date: shift(taskStart(t)),
 			due_date: shift(t.due_date),
 			start_time: t.start_time,
 			end_time: t.end_time,
 			recurrence: t.recurrence,
+			recur_until: t.recur_until,
 			sort: t.sort
 		});
 		for (const c of this.children(t.id)) {
@@ -252,6 +467,9 @@ class Store {
 				parent_id: next.id,
 				title: c.title,
 				priority: c.priority,
+				in_gantt: c.in_gantt,
+				tags: [...c.tags],
+				start_date: shift(taskStart(c)),
 				due_date: shift(c.due_date),
 				sort: c.sort
 			});
@@ -272,25 +490,96 @@ class Store {
 	async deleteTask(id: string) {
 		const ids = [id, ...this.descendants(id).map((d) => d.id)];
 		const set = new Set(ids);
+		// copia di tutto ciò che sparisce, per poterlo ripristinare
+		const snap = {
+			tasks: this.tasks.filter((t) => set.has(t.id)).map((t) => ({ ...t })),
+			notes: this.notes.filter((n) => set.has(n.task_id)).map((n) => ({ ...n })),
+			attachments: this.attachments.filter((a) => set.has(a.task_id)).map((a) => ({ ...a })),
+			deps: this.deps.filter((d) => set.has(d.task_id) || set.has(d.depends_on_id)).map((d) => ({ ...d }))
+		};
+		const title = this.byId.get(id)?.title ?? '';
+		const withFiles = [...new Set(snap.attachments.map((a) => a.task_id))];
+		await this.batch(
+			ids.length > 1 ? tl('{n} task eliminati', { n: ids.length }) : tl('Task eliminato') + (title ? `: ${title.slice(0, 40)}` : ''),
+			async () => {
+				// gli allegati su disco restano finché si può annullare (vedi finalize / purgeOldAttachments)
+				if (withFiles.length) {
+					const m = readPurge();
+					for (const tid of withFiles) m[tid] = Date.now();
+					writePurge(m);
+				}
+				this.record({
+					label: tl('Task eliminato'),
+					purgeIds: withFiles,
+					undo: () => this.restoreRaw(snap),
+					redo: async () => {
+						if (withFiles.length) {
+							const m = readPurge();
+							for (const tid of withFiles) m[tid] = Date.now();
+							writePurge(m);
+						}
+						await this.removeRaw(ids);
+					}
+				});
+				await this.removeRaw(ids);
+			},
+			true
+		);
+	}
+
+	/** Elimina i task dal DB e dallo stato (senza toccare gli allegati su disco né lo storico). */
+	private async removeRaw(ids: string[]) {
+		const set = new Set(ids);
 		this.tasks = this.tasks.filter((t) => !set.has(t.id));
 		this.notes = this.notes.filter((n) => !set.has(n.task_id));
 		this.attachments = this.attachments.filter((a) => !set.has(a.task_id));
 		this.deps = this.deps.filter((d) => !set.has(d.task_id) && !set.has(d.depends_on_id));
+		if (ui_selectionHook) ui_selectionHook(ids);
+		const order = [...ids];
 		await this.write(async () => {
-			for (const tid of ids) {
+			for (const tid of order) {
 				await exec('DELETE FROM task_deps WHERE task_id = $1 OR depends_on_id = $1', [tid]);
-				await invoke('delete_task_attachments', { taskId: tid }).catch(() => {});
 				await exec('DELETE FROM notes WHERE task_id = $1', [tid]);
 				await exec('DELETE FROM attachments WHERE task_id = $1', [tid]);
 			}
-			for (const tid of ids.reverse()) await exec('DELETE FROM tasks WHERE id = $1', [tid]);
+			for (const tid of order.reverse()) await exec('DELETE FROM tasks WHERE id = $1', [tid]);
+		});
+	}
+
+	/** Rimette nel DB e nello stato task, note, allegati e dipendenze (genitori prima dei figli). */
+	private async restoreRaw(snap: { tasks: Task[]; notes: Note[]; attachments: Attachment[]; deps: Dep[] }) {
+		const have = new Set(this.tasks.map((t) => t.id));
+		const byId = new Map(snap.tasks.map((t) => [t.id, t]));
+		const depth = (t: Task): number => (t.parent_id && byId.has(t.parent_id) ? 1 + depth(byId.get(t.parent_id)!) : 0);
+		const tasks = snap.tasks.filter((t) => !have.has(t.id)).sort((a, b) => depth(a) - depth(b)).map((t) => ({ ...t }));
+		const notes = snap.notes.filter((n) => !this.notes.some((x) => x.id === n.id));
+		const atts = snap.attachments.filter((a) => !this.attachments.some((x) => x.id === a.id));
+		const deps = snap.deps.filter(
+			(d) => !this.deps.some((x) => x.task_id === d.task_id && x.depends_on_id === d.depends_on_id) && (byId.has(d.task_id) || this.byId.has(d.task_id)) && (byId.has(d.depends_on_id) || this.byId.has(d.depends_on_id))
+		);
+		this.tasks.push(...tasks);
+		this.notes.push(...notes);
+		this.attachments.push(...atts);
+		this.deps.push(...deps);
+		const m = readPurge();
+		let touched = false;
+		for (const a of atts) if (m[a.task_id]) (delete m[a.task_id], (touched = true));
+		if (touched) writePurge(m);
+		await this.write(async () => {
+			for (const t of tasks) await this.insertTask(t);
+			for (const n of notes) await exec('INSERT OR IGNORE INTO notes (id, task_id, text, created_at) VALUES ($1,$2,$3,$4)', [n.id, n.task_id, n.text, n.created_at]);
+			for (const a of atts)
+				await exec('INSERT OR IGNORE INTO attachments (id, task_id, name, path, size, created_at) VALUES ($1,$2,$3,$4,$5,$6)', [a.id, a.task_id, a.name, a.path, a.size, a.created_at]);
+			for (const d of deps) await exec('INSERT OR IGNORE INTO task_deps (task_id, depends_on_id, created_at) VALUES ($1,$2,$3)', [d.task_id, d.depends_on_id, d.created_at]);
 		});
 	}
 
 	async moveToList(id: string, listId: string | null) {
 		listId = listId ?? this.defaultListId;
 		const all = [id, ...this.descendants(id).map((d) => d.id)];
-		for (const tid of all) await this.updateTask(tid, { list_id: listId });
+		await this.batch(tl('Lista'), async () => {
+			for (const tid of all) await this.updateTask(tid, { list_id: listId });
+		});
 	}
 
 	/**
@@ -300,13 +589,15 @@ class Store {
 	async reorder(id: string, ordered: string[], index: number, extra: Partial<Task> = {}) {
 		const get = (i: number) => (i >= 0 && i < ordered.length ? this.byId.get(ordered[i])?.sort : undefined);
 		const { value, needsRenumber } = sortBetween(get(index - 1), get(index));
-		await this.updateTask(id, { ...extra, sort: value });
-		if (needsRenumber) {
-			const finalOrder = [...ordered];
-			finalOrder.splice(index, 0, id);
-			const base = Date.now();
-			for (let i = 0; i < finalOrder.length; i++) await this.updateTask(finalOrder[i], { sort: base + i * 1000 });
-		}
+		await this.batch(tl('Ordine'), async () => {
+			await this.updateTask(id, { ...extra, sort: value });
+			if (needsRenumber) {
+				const finalOrder = [...ordered];
+				finalOrder.splice(index, 0, id);
+				const base = Date.now();
+				for (let i = 0; i < finalOrder.length; i++) await this.updateTask(finalOrder[i], { sort: base + i * 1000 });
+			}
+		});
 	}
 
 	async addDep(taskId: string, dependsOnId: string): Promise<boolean> {

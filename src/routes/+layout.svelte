@@ -4,6 +4,11 @@
 	import { onMount } from 'svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import AboutDialog from '../lib/components/AboutDialog.svelte';
+	import SearchDialog from '../lib/components/SearchDialog.svelte';
+	import StatsDialog from '../lib/components/StatsDialog.svelte';
+	import TourDialog from '../lib/components/TourDialog.svelte';
+	import ShortcutsDialog from '../lib/components/ShortcutsDialog.svelte';
+	import TemplatesDialog from '../lib/components/TemplatesDialog.svelte';
 	import { panel, setSidebarWidth, initSidebar, SIDEBAR_DEFAULT } from '../lib/layoutui.svelte';
 	import CloseDialog from '../lib/components/CloseDialog.svelte';
 	import Sidebar from '../lib/components/Sidebar.svelte';
@@ -18,9 +23,12 @@
 	import ListEditor from '../lib/components/ListEditor.svelte';
 	import QuickBar from '../lib/components/QuickBar.svelte';
 	import DragGhost from '../lib/components/DragGhost.svelte';
-	import { store } from '../lib/store.svelte';
+	import { store, onTasksRemoved } from '../lib/store.svelte';
 	import { nav, ui, toast, go } from '../lib/nav.svelte';
 	import { initTheme } from '../lib/theme.svelte';
+	import { startAutoBackup } from '../lib/autobackup.svelte';
+	import { initUiPrefs, uiprefs, setTourDone } from '../lib/uiprefs.svelte';
+	import { startReminders } from '../lib/reminders.svelte';
 	import { selection, clearSelection, selectAll } from '../lib/selection.svelte';
 	import { initLang, t as tt } from '../lib/i18n.svelte';
 	import { setWorkspace } from '../lib/db';
@@ -39,7 +47,14 @@
 		setWorkspace(id);
 		ui.datasetId = id;
 		ui.pickDataset = false;
+		store.clearHistory();
 		await store.reload();
+		store.purgeOldAttachments();
+		// primo avvio: la guida compare solo con un set vuoto; chi ha già dei dati non la vede
+		if (!nav.quick && !uiprefs.tourDone) {
+			if (store.tasks.length === 0) ui.tourOpen = true;
+			else setTourDone(true);
+		}
 		refreshWindowTitle(id);
 	}
 	// cambiando vista la selezione non ha più senso
@@ -51,8 +66,16 @@
 
 	onMount(() => {
 		initTheme();
+		initUiPrefs();
+		// task spariti (eliminati o annullati): niente selezione né pannello di dettaglio su ciò che non esiste più
+		onTasksRemoved((ids) => {
+			if (ui.selectedTaskId && ids.includes(ui.selectedTaskId)) ui.selectedTaskId = null;
+			for (const id of ids) selection.delete(id);
+		});
 		initLang();
 		if (!nav.quick) initSidebar();
+		const stopReminders = nav.quick ? () => {} : startReminders();
+		const stopAutoBackup = nav.quick ? () => {} : startAutoBackup();
 		let timer: ReturnType<typeof setTimeout>;
 		let unlisten: (() => void) | undefined;
 		let unlistenClose: (() => void) | undefined;
@@ -80,9 +103,50 @@
 		const key = (e: KeyboardEvent) => {
 			if (nav.quick) return;
 			const mod = e.ctrlKey || e.metaKey;
+			const tgt = e.target as HTMLElement;
+			const typing = !!tgt.closest?.('input, textarea, select, [contenteditable]');
+			const overlay = !!document.querySelector('[role=menu],[role=listbox],[role=dialog]');
+			const onControl = !!tgt.closest?.('button, a, [role=button], summary');
+			if (!mod && !e.altKey && !typing && !overlay) {
+				if (e.key === '?') {
+					e.preventDefault();
+					ui.shortcutsOpen = true;
+					return;
+				}
+				if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+					const rows = [...document.querySelectorAll<HTMLElement>('[data-task][data-task-id]')];
+					if (rows.length) {
+						e.preventDefault();
+						const i = rows.findIndex((r) => r.dataset.taskId === ui.selectedTaskId);
+						const next = rows[Math.max(0, Math.min(rows.length - 1, i < 0 ? 0 : i + (e.key === 'ArrowDown' ? 1 : -1)))];
+						ui.selectedTaskId = next.dataset.taskId ?? null;
+						next.scrollIntoView({ block: 'nearest' });
+					}
+					return;
+				}
+				if (ui.selectedTaskId && e.key === 'Enter' && !onControl) {
+					e.preventDefault();
+					document.querySelector<HTMLInputElement>('aside input[type=text], aside input:not([type])')?.focus();
+					return;
+				}
+				if (ui.selectedTaskId && e.key === ' ' && !onControl) {
+					e.preventDefault();
+					const tk = store.byId.get(ui.selectedTaskId);
+					if (tk) store.setCompleted(tk.id, !tk.completed);
+					return;
+				}
+			}
 			if (mod && e.shiftKey && e.key.toLowerCase() === 'i') {
 				e.preventDefault();
 				ui.bulkOpen = true;
+			} else if (mod && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y') && !(e.target as HTMLElement).closest('input, textarea, [contenteditable]')) {
+				// annulla / ripeti (nei campi di testo resta l'annulla del testo)
+				e.preventDefault();
+				if (e.key.toLowerCase() === 'y' || e.shiftKey) store.redo();
+				else store.undo();
+			} else if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
+				e.preventDefault();
+				ui.searchOpen = !ui.searchOpen;
 			} else if (mod && e.key.toLowerCase() === 'n') {
 				e.preventDefault();
 				openWindow();
@@ -115,6 +179,8 @@
 		return () => {
 			unlisten?.();
 			unlistenClose?.();
+			stopReminders();
+			stopAutoBackup();
 			clearTimeout(timer);
 			window.removeEventListener('keydown', key);
 			window.removeEventListener('click', outside, true);
@@ -193,6 +259,11 @@
 	<DataDialog />
 	<CloseDialog />
 	<AboutDialog />
+	<SearchDialog />
+	<StatsDialog />
+	<TourDialog />
+	<ShortcutsDialog />
+	<TemplatesDialog />
 	<ImportDialog />
 	<SetPicker onchosen={openDataset} />
 	<DragGhost />
@@ -201,7 +272,13 @@
 	{/if}
 	{#if toast.msg}
 		{#key toast.id}
-			<div class="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-fg px-4 py-2 text-[13px] text-bg shadow-pop" in:mIn={{ y: 10 }} out:mOut={{ y: 10 }}>{toast.msg}</div>
+			<div class="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-3 rounded-xl bg-fg px-4 py-2 text-[13px] text-bg shadow-pop" in:mIn={{ y: 10 }} out:mOut={{ y: 10 }}>
+				<span>{toast.msg}</span>
+				{#if toast.action}
+					{@const act = toast.action}
+					<button class="rounded-md px-1.5 py-0.5 font-semibold text-accent-fg underline-offset-2 hover:underline" style="color: color-mix(in srgb, var(--accent) 70%, white)" onclick={() => { toast.msg = ''; toast.action = null; act.run(); }}>{act.label}</button>
+				{/if}
+			</div>
 		{/key}
 	{/if}
 {/if}

@@ -22,26 +22,36 @@
 	});
 
 	async function setDue(due: string | null) {
-		const patch = due ? { due_date: due } : { due_date: null, start_time: null, end_time: null, recurrence: 'none' as const };
-		for (const id of ids) await store.updateTask(id, patch);
+		const patch = due ? { due_date: due } : { due_date: null, start_time: null, end_time: null, remind_min: null, recurrence: 'none' as const };
+		await store.batch(tt('Scadenza'), async () => {
+			for (const id of ids) await store.updateTask(id, patch);
+		});
 		datePick = false;
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setPriority(p: Priority) {
-		for (const id of ids) await store.updateTask(id, { priority: p });
+		await store.batch(tt('Priorità'), async () => {
+			for (const id of ids) await store.updateTask(id, { priority: p });
+		});
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setList(l: string | null) {
-		for (const id of ids) await store.moveToList(id, l);
+		await store.batch(tt('Lista'), async () => {
+			for (const id of ids) await store.moveToList(id, l);
+		});
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setGroup(g: string | null) {
-		for (const id of ids) if (!store.byId.get(id)?.parent_id) await store.moveToGroup(id, g);
+		await store.batch(tt('Gruppo'), async () => {
+			for (const id of ids) if (!store.byId.get(id)?.parent_id) await store.moveToGroup(id, g);
+		});
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setStatus(s: Status) {
 		const blocked = s === 'done' ? ids.filter((id) => store.blockers(id).length) : [];
-		for (const id of ids) if (!blocked.includes(id)) await store.setStatus(id, s);
+		await store.batch(tt('Stato'), async () => {
+			for (const id of ids) if (!blocked.includes(id)) await store.setStatus(id, s);
+		});
 		if (blocked.length) showToast(tt('{n} task in attesa non completati', { n: blocked.length }));
 		else showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
@@ -64,8 +74,13 @@
 			danger: true,
 			run: async () => {
 				clearSelection();
-				for (const id of list) if (store.byId.has(id)) await store.deleteTask(id);
-				showToast(tt('{n} task eliminati', { n }));
+				await store.batch(
+					n === 1 ? tt('Task eliminato') : tt('{n} task eliminati', { n }),
+					async () => {
+						for (const id of list) if (store.byId.has(id)) await store.deleteTask(id);
+					},
+					true
+				);
 			}
 		});
 	}

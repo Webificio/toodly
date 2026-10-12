@@ -107,6 +107,34 @@ pub async fn export_zip(
     Ok(n)
 }
 
+/// Elimina i backup automatici (`toodly-auto-*.zip`) più vecchi, tenendo gli ultimi `keep`.
+#[tauri::command]
+pub async fn prune_backups(dir: String, keep: u32) -> Result<u32, String> {
+    let mut files: Vec<(std::time::SystemTime, PathBuf)> = Vec::new();
+    for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())?.flatten() {
+        let path = entry.path();
+        let is_auto = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| n.starts_with("toodly-auto-") && n.ends_with(".zip"))
+            .unwrap_or(false);
+        if !is_auto {
+            continue;
+        }
+        if let Ok(modified) = entry.metadata().and_then(|m| m.modified()) {
+            files.push((modified, path));
+        }
+    }
+    files.sort_by(|a, b| b.0.cmp(&a.0));
+    let mut removed = 0u32;
+    for (_, path) in files.into_iter().skip(keep as usize) {
+        if std::fs::remove_file(&path).is_ok() {
+            removed += 1;
+        }
+    }
+    Ok(removed)
+}
+
 fn read_entry(zip: &mut zip::ZipArchive<std::fs::File>, name: &str) -> Result<String, String> {
     let mut f = zip.by_name(name).map_err(|_| format!("MISSING_FILE:{name}"))?;
     let mut s = String::new();

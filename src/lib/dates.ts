@@ -38,8 +38,31 @@ export function startOfMonth(iso: string): string {
 	d.setDate(1);
 	return toISO(d);
 }
+/** Giorni della settimana (0 = domenica … 6 = sabato) di una ripetizione `dow:1,4`. */
+export function recurrenceDays(rec: string): number[] {
+	if (!rec.startsWith('dow:')) return [];
+	return [...new Set(rec.slice(4).split(',').filter((x) => x.trim() !== '').map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6))].sort();
+}
 export function nextOccurrence(iso: string, rec: string): string {
+	if (rec.startsWith('dow:')) {
+		const days = recurrenceDays(rec);
+		if (!days.length) return iso;
+		for (let i = 1; i <= 7; i++) {
+			const c = addDays(iso, i);
+			if (days.includes(parseISO(c).getDay())) return c;
+		}
+		return iso;
+	}
 	switch (rec) {
+		case 'weekdays': {
+			let c = addDays(iso, 1);
+			while ([0, 6].includes(parseISO(c).getDay())) c = addDays(c, 1);
+			return c;
+		}
+		case 'monthend': {
+			const x = parseISO(iso);
+			return toISO(new Date(x.getFullYear(), x.getMonth() + 2, 0));
+		}
 		case 'daily':
 			return addDays(iso, 1);
 		case 'weekly':
@@ -51,6 +74,10 @@ export function nextOccurrence(iso: string, rec: string): string {
 		default:
 			return iso;
 	}
+}
+/** Data di inizio effettiva di un task: `start_date`, altrimenti il giorno di creazione. */
+export function taskStart(t: { start_date: string | null; created_at: string }): string {
+	return t.start_date ?? toISO(new Date(t.created_at));
 }
 export function diffDays(a: string, b: string): number {
 	return Math.round((parseISO(a).getTime() - parseISO(b).getTime()) / 86400000);

@@ -67,6 +67,7 @@
 		const t = todayISO();
 		store.createTask({
 			title: p.title,
+			tags: scopeInfo.kind === 'tag' ? [...p.tags, scopeInfo.id] : p.tags,
 			priority: nav.group === 'priority' ? (Number(col.key) as Priority) : p.priority,
 			status: nav.group === 'status' ? (col.key as Status) : 'todo',
 			list_id: p.list_id ?? (scopeInfo.kind === 'list' ? scopeInfo.id : null),
@@ -109,6 +110,7 @@
 						<div
 							data-card
 							data-task
+							data-task-id={task.id}
 							class="cursor-grab rounded-xl border bg-panel p-3 shadow-sm {store.blockedIds.has(task.id) ? 'border-dashed border-p2/60' : 'border-border'} transition-colors hover:border-accent/50 {selection.has(task.id) ? 'border-accent bg-accent/10 ring-1 ring-accent/40' : ui.selectedTaskId === task.id ? 'border-accent' : ''}"
 							use:draggable={{ payload: () => ({ type: 'task', id: task.id }), label: () => task.title }}
 							onclick={(e) => { if (!handleSelectClick(e, task.id)) ui.selectedTaskId = task.id; else ui.selectedTaskId = null; }}

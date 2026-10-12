@@ -96,6 +96,18 @@ pub async fn open_attachment(app: AppHandle, path: String) -> Result<(), String>
         .map_err(|e| e.to_string())
 }
 
+/// Legge un allegato (solo dentro la cartella allegati) per l'anteprima; oltre 8 MB rifiuta.
+#[tauri::command]
+pub async fn read_attachment(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
+    let p = inside_root(&app, &path)?;
+    let len = std::fs::metadata(&p).map_err(|e| e.to_string())?.len();
+    if len > 8 * 1024 * 1024 {
+        return Err("file troppo grande per l'anteprima".into());
+    }
+    let bytes = std::fs::read(&p).map_err(|e| e.to_string())?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 /// Apre un link esterno (solo http/https/mailto) nel browser di sistema.
 #[tauri::command]
 pub async fn open_external(app: AppHandle, url: String) -> Result<(), String> {

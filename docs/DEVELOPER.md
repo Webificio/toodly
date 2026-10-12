@@ -23,7 +23,7 @@ Key ideas:
 
 1. **Data sets, not windows, own data.** A set is a SQLite file (`ds-<id>.db`) that exists independently from windows. A window is assigned exactly one set at a time, and a set can be open in at most one window.
 2. **Windows are described by `WinState`** (label, route, geometry, maximized, set id, sidebar width) and persisted by the backend in `windows.json`.
-3. **Navigation state lives in the URL query string** (`scope`, `mode`, `sort`, `group`, `cal`, `d`). The frontend reports the route to the backend (`report_route`) on every navigation, so views are restored on restart.
+3. **Navigation state lives in the URL query string** (`scope`, `mode`, `sort`, `group`, `cal`, `gz`, `d`). The frontend reports the route to the backend (`report_route`) on every navigation, so views are restored on restart.
 4. **The backend never produces user-facing text**: it returns codes (`NAME_TAKEN`, `NAME_REQUIRED`, `UNSUPPORTED_VERSION:<n>`…) that the frontend translates. The only exception is the tray menu, which has its own table in `lib.rs`.
 
 ## 2. Repository layout
@@ -52,7 +52,10 @@ src/
     markdown.ts              Markdown rendering (marked + DOMPurify)
     dnd.svelte.ts            drag & drop with Pointer Events
     selection.svelte.ts      multi-selection state
-    groupui.svelte.ts        collapsed groups (localStorage)
+    groupui.svelte.ts        collapsed groups per data set + view (localStorage)
+    components/GanttView.svelte   Gantt: tree (groups/tasks) + timeline, drag/resize bars, dependency arrows
+    exportgantt.ts           Gantt → Mermaid (.md) export
+    uiprefs.svelte.ts        UI preferences (task numbering) in localStorage
     layoutui.svelte.ts       per-window sidebar width
     theme.svelte.ts          light / dark / system
     i18n.svelte.ts, en.json  translations
@@ -78,13 +81,13 @@ Defined in `src/lib/schema.ts` (all steps are idempotent and run every time a se
 |---|---|---|
 | `lists` | Colored task lists | `name`, `color`, `sort` |
 | `task_groups` | Tree of groups / sub-groups | `parent_id` (self FK, `SET NULL`), `name`, `sort` |
-| `tasks` | Tasks and sub-tasks | `list_id`, `group_id`, `parent_id` (cascade), `title`, `description` (Markdown), `completed`, `completed_at`, `priority` 0–3, `status` `todo\|doing\|done`, `due_date` `YYYY-MM-DD`, `start_time`/`end_time` `HH:MM`, `recurrence` `none\|daily\|weekly\|monthly\|yearly`, `sort` |
+| `tasks` | Tasks and sub-tasks | `list_id`, `group_id`, `parent_id` (cascade), `title`, `description` (Markdown), `completed`, `completed_at`, `priority` 0–3, `status` `todo\|doing\|done`, `in_gantt` 0/1 (default 1: show in the Gantt), `start_date` `YYYY-MM-DD` (Gantt start; `NULL` = creation day, see `taskStart()` in `dates.ts`), `due_date` `YYYY-MM-DD`, `start_time`/`end_time` `HH:MM`, `recurrence` `none\|daily\|weekly\|monthly\|yearly`, `sort` |
 | `notes` | Note feed of a task | `task_id`, `text`, `created_at` |
 | `attachments` | Files attached to a task | `task_id`, `name`, absolute `path`, `size` |
 | `filters` | Saved custom filters | `match_mode` `and\|or`, `rules` (JSON array of `{field, op, value}`) |
 | `task_deps` | Dependencies | `(task_id, depends_on_id)` primary key, cascade |
 
-`TABLES` in `schema.ts` lists the tables in dependency order; export, import and wipe rely on it. `group_id` was added later via a guarded `ALTER TABLE`, which is the pattern to follow for new columns (check `PRAGMA table_info` first, since `ALTER` is not idempotent).
+`TABLES` in `schema.ts` lists the tables in dependency order; export, import and wipe rely on it. `group_id`, `in_gantt` and `start_date` were added later via a guarded `ALTER TABLE` (`start_date` is back-filled once with the local creation day, never after `due_date`), which is the pattern to follow for new columns (check `PRAGMA table_info` first, since `ALTER` is not idempotent).
 
 **Invariants** enforced by the store:
 
@@ -137,7 +140,7 @@ Native HTML5 drag & drop is disabled (`disable_drag_drop_handler`); `dnd.svelte.
 
 ### Local preferences
 
-Stored in `localStorage` with the `toodly.` prefix (theme, language, collapsed groups, legacy sidebar width). They are included in the backup manifest (`prefs`) and cleared by "Delete all data".
+Stored in `localStorage` with the `toodly.` prefix (theme, language, task numbering, reminders, default reminder time, tour done, collapsed detail sections, collapsed groups, legacy sidebar width). They are included in the backup manifest (`prefs`) and cleared by "Delete all data".
 
 ## 5. Backend (Rust)
 
@@ -182,6 +185,20 @@ Window-creating commands are `async` and handlers go through `spawn_new_window` 
 
 `src-tauri/capabilities/default.json` grants the default core permissions, SQL (`sql:default`, `sql:allow-execute`), autostart, dialog and `core:window:allow-set-title` to all windows. Add a permission there when you use a new plugin API from the frontend.
 
+### Undo, search, reminders
+
+- **History** (`store.svelte.ts`): `record()` pushes `{label, key, undo, redo}`; same-`key` entries within 1.5 s merge; `batch(label, fn, toast)` groups several operations into one entry; limit 100; `clearHistory()` on data-set change. Deleting keeps attachment files (list in `localStorage` `toodly-internal.pendingPurge`, purged after 6 h or on eviction). `onTasksRemoved(fn)` lets the UI drop selection of vanished tasks.
+- **Search**: `SearchDialog.svelte`, opened with `ui.searchOpen`.
+- **Reminders** (`reminders.svelte.ts`): a 20 s tick per non-quick window; dedupe through `toodly-internal.reminded` (not backed up). Uses `@tauri-apps/plugin-notification` (`tauri-plugin-notification` in `Cargo.toml`, registered in `lib.rs`, permission `notification:default`). After pulling these changes run `npm install` and rebuild the Rust side. Only the data set open in a window is checked.
+- **Migrations** (`schema.ts`): `addColumn()` is idempotent and `PRAGMA busy_timeout = 5000` is set, so concurrent windows can migrate the same file.
+- `toodly-internal.*` localStorage keys are runtime state and are not part of backups.
+
+### Tags, recurrence, milestones (schema additions)
+
+New `tasks` columns (guarded by `addColumn`): `tags` (lowercase words separated by spaces; `src/lib/tags.ts` normalizes/parses; `Task.tags` is a `string[]`, converted in `applyPatch` and on load), `recur_until` (ISO date) and `milestone` (0/1). `recurrence` is now a free string: `none | daily | weekly | monthly | yearly | weekdays | monthend | dow:1,4` (0 = Sunday); `nextOccurrence()` in `dates.ts` interprets it and `spawnNextOccurrence` shifts the other dates by the same day delta. `parseQuick(text, lists, withTags = true)` returns `tags` (bulk import passes `false`). The `tag:<name>` scope and the `tag` filter rule live in `views.ts`. `EXPORT_FORMAT_VERSION` is unchanged: backups copy the columns that both sides have.
+
+GanttView extras: `critical` (tight dependency chain ending at the latest end date), `lateIds`/`lateKeep`, link-drag (`startLink`, `store.addDep`) and row virtualization (`win`/`visible`, active above 120 rows). Appearance prefs (`density`, `textScale`) are applied to `<html>` (`data-density`, CSS `zoom`) by `uiprefs.svelte.ts`.
+
 ### Adding a command
 
 1. Write the `#[tauri::command]` function (take `AppHandle` / `WebviewWindow` as needed; `window.label()` identifies the caller).
@@ -210,10 +227,23 @@ attachments/<setId>/<attachmentId>/<name>
 - Keep documentation updated: README, FEATURES, USER_GUIDE and this file when behavior changes, including per-OS build notes.
 - Version bumps touch `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` together; the About dialog reads the version from `package.json` at build time (`__APP_VERSION__` in `vite.config.ts`).
 
+### Templates, backups, previews, .ics
+
+- `templates.svelte.ts`: templates in `localStorage` (`toodly.templates`), nodes keep date offsets from the root task; `useTemplate` creates tasks inside `store.batch` (one undo step).
+- `autobackup.svelte.ts`: scheduler (20 s after start, then every 30 min) using `autoBackupTo()` in `backup.ts` and the Rust command `prune_backups(dir, keep)` (deletes the oldest `toodly-auto-*.zip`). State in `toodly-internal.autoBackup*`; cross-window lock key `toodly-internal.autoBackupLock`.
+- `read_attachment` (Rust, `attachments.rs`) returns the bytes of an attachment (inside the attachments root, max 8 MB) as `tauri::ipc::Response`; `AttachmentPreview.svelte` builds a Blob URL.
+- `ics.ts` is pure (no Tauri) and unit-tested; `exportics.ts` handles the save dialog.
+- Tests live in `tests/` and mock `src/lib/i18n.svelte` with `vi.mock`; `vitest.config.ts` is separate from `vite.config.ts` so no SvelteKit plugin is needed.
+
+### Changelog and releases
+
+`CHANGELOG.md` (Keep a Changelog format) is the single source of release notes. While working, add items under `## [Unreleased]`. To release: rename it to `## [x.y.z] - YYYY-MM-DD` (and open a fresh *Unreleased*), bump the version in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` (and the lockfiles), commit, then `git tag vx.y.z && git push --tags`. The workflow checks the tag against `package.json` and the changelog, runs `npm test`, builds the installers and creates the GitHub release with the changelog section as its text (`node scripts/release-notes.mjs x.y.z` prints it locally).
+
 ## 8. Useful checks
 
 ```bash
 npm run check                 # svelte-check / TypeScript
+npm test                      # vitest: logic tests in tests/ (dates, quick-add parsing, tags, scopes/filters, .ics)
 cd src-tauri && cargo check   # Rust type-check
 npm run tauri dev             # run the app with hot reload
 ```

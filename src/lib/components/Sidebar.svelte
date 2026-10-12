@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Sun, CalendarRange, Flag, Layers, Plus, Settings, AppWindow, Filter as FilterIcon, FilterX, FileDown, Pencil, ListPlus } from '@lucide/svelte';
+	import { Sun, CalendarRange, Flag, Layers, Plus, Settings, AppWindow, Filter as FilterIcon, FilterX, FileDown, Pencil, ListPlus, ChartColumn, Hash } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { nav, go, ui, showToast } from '../nav.svelte';
@@ -21,6 +21,7 @@
 		const c: Record<string, number> = {};
 		for (const s of smart) c[s.id] = open.filter((t) => inScope(t, s.id, store.filters, store.blockedIds)).length;
 		for (const l of store.lists) c['list:' + l.id] = open.filter((t) => t.list_id === l.id).length;
+		for (const [g, n] of store.tagList) c['tag:' + g] = n;
 		for (const f of store.filters) c['filter:' + f.id] = open.filter((t) => inScope(t, 'filter:' + f.id, store.filters, store.blockedIds)).length;
 		return c;
 	});
@@ -84,6 +85,13 @@
 			<p class="px-2.5 py-1 text-[12px] text-faint">{t('Nessuna lista')}</p>
 		{/each}
 
+		{#if store.tagList.length}
+			<div class="flex items-center px-2.5 pt-5 pb-1 text-[11px] font-semibold tracking-wider text-faint uppercase">{t('Etichette')}</div>
+			{#each store.tagList as [g] (g)}
+				{@render item('tag:' + g, g, null, Hash, undefined, true)}
+			{/each}
+		{/if}
+
 		<div class="flex items-center px-2.5 pt-5 pb-1 text-[11px] font-semibold tracking-wider text-faint uppercase">
 			{t('Filtri')}
 			<button class="icon-btn ml-auto size-6" aria-label={t('Nuovo filtro')} onclick={() => (ui.filterEditor = 'new')}><Plus size={14} /></button>
@@ -107,6 +115,7 @@
 			<AppWindow size={15} /> {t('Nuova finestra')}
 		</button>
 		<button class="icon-btn" aria-label={t('Aggiungi più task da testo')} title={t('Aggiungi più task da testo') + ' (Ctrl+Shift+I)'} onclick={() => (ui.bulkOpen = true)}><ListPlus size={16} /></button>
+		<button class="icon-btn" aria-label={t('Statistiche')} title={t('Statistiche')} onclick={() => (ui.statsOpen = true)}><ChartColumn size={16} /></button>
 		<button class="icon-btn" aria-label={t('Impostazioni')} onclick={() => (ui.settingsOpen = true)}><Settings size={16} /></button>
 	</div>
 </nav>

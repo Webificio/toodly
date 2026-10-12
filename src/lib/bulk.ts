@@ -67,7 +67,7 @@ export function parseBulk(text: string, lists: List[]): BulkParse {
 		if (/^\s*>/.test(raw)) continue; // citazioni (descrizioni nell'export Markdown): ignorate
 		const line = raw.replace(/^\s*(?:[-*•]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/, '').trim();
 		if (!line) continue;
-		const p = parseQuick(line, lists);
+		const p = parseQuick(line, lists, false);
 		if (!p.title) continue;
 		const { title, description } = splitTitle(p.title);
 		items.push({ title, description, priority: p.priority, due_date: p.due_date, list_id: p.list_id, shortened: !!description, groupPath: stack.map((x) => x.name) });

@@ -41,7 +41,7 @@
 		const p = parseQuick(text, store.lists);
 		value = '';
 		hideQuick(); // la barra scompare subito, restituendo il focus al sistema
-		if (p.title) await store.createTask({ title: p.title, priority: p.priority, due_date: p.due_date, list_id: p.list_id });
+		if (p.title) await store.createTask({ title: p.title, priority: p.priority, due_date: p.due_date, list_id: p.list_id, tags: p.tags });
 	}
 </script>
 

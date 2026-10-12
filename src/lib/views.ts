@@ -2,12 +2,13 @@ import { addDays, diffDays, todayISO, toMinutes } from './dates';
 import type { Filter, Rule, SortMode, Task } from './types';
 
 export interface ScopeInfo {
-	kind: 'smart' | 'list' | 'filter';
+	kind: 'smart' | 'list' | 'filter' | 'tag';
 	id: string;
 }
 
 export function parseScope(scope: string): ScopeInfo {
 	if (scope.startsWith('list:')) return { kind: 'list', id: scope.slice(5) };
+	if (scope.startsWith('tag:')) return { kind: 'tag', id: scope.slice(4) };
 	if (scope.startsWith('filter:')) return { kind: 'filter', id: scope.slice(7) };
 	return { kind: 'smart', id: scope };
 }
@@ -59,6 +60,9 @@ export function ruleMatches(t: Task, r: Rule, blocked?: Set<string>): boolean {
 		case 'blocked':
 			res = !!blocked?.has(t.id) === (r.value === 'true');
 			break;
+		case 'tag':
+			res = t.tags.includes(r.value.toLowerCase());
+			break;
 		case 'title':
 			res = t.title.toLowerCase().includes(r.value.toLowerCase());
 			break;
@@ -78,6 +82,7 @@ export function inScope(t: Task, scope: string, filters: Filter[], blocked?: Set
 	const s = parseScope(scope);
 	const today = todayISO();
 	if (s.kind === 'list') return t.list_id === s.id;
+	if (s.kind === 'tag') return t.tags.includes(s.id);
 	if (s.kind === 'filter') {
 		const f = filters.find((x) => x.id === s.id);
 		return f ? filterMatches(t, f, blocked) : false;
