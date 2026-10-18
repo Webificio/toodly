@@ -83,7 +83,7 @@ Tauri v2 (Rust) · SvelteKit (SPA/SSG, Svelte 5) · Tailwind CSS v4 · bits-ui (
 
 Requirements:
 
-- Node.js 20+ and npm
+- Node.js 20.19+ or 22.12+ (not 21.x) and npm
 - Rust stable (<https://rustup.rs>)
 - Windows: Microsoft C++ Build Tools + WebView2 (already present on up-to-date Windows 10/11)
 - macOS: Xcode Command Line Tools
