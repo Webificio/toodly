@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.0.2-6b3fa0.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.2.0-6b3fa0.svg">
   <img alt="Tauri v2" src="https://img.shields.io/badge/Tauri-v2-24C8DB.svg?logo=tauri&logoColor=white">
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte-5-FF3E00.svg?logo=svelte&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg">
@@ -25,7 +25,7 @@ Add your images to docs/screenshots/ and uncomment:
 | ![List](docs/screenshots/list.png) | ![Kanban](docs/screenshots/kanban.png) | ![Calendar](docs/screenshots/calendar.png) |
 -->
 
-> **Status:** early release (1.0.2). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
+> **Status:** early release (1.2.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
 
 ## Download
 
