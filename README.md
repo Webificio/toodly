@@ -15,15 +15,30 @@
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg">
 </p>
 
-<!--
 ## Screenshots
 
-Add your images to docs/screenshots/ and uncomment:
-
-| List view | Kanban | Calendar |
-|---|---|---|
-| ![List](docs/screenshots/list.png) | ![Kanban](docs/screenshots/kanban.png) | ![Calendar](docs/screenshots/calendar.png) |
--->
+<table>
+<tr>
+<td width="50%"><a href="docs/screenshots/home-list.jpg"><img src="docs/screenshots/home-list.jpg" alt="Home — List view"></a><br><sub><b>Home — List view</b> — The Today smart view as a list, with overdue and scheduled tasks.</sub></td>
+<td width="50%"><a href="docs/screenshots/home-kanban.jpg"><img src="docs/screenshots/home-kanban.jpg" alt="Home — Kanban view"></a><br><sub><b>Home — Kanban view</b> — The Today smart view as a Kanban board, by status.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/list.jpg"><img src="docs/screenshots/list.jpg" alt="List view"></a><br><sub><b>List view</b> — All tasks as a hierarchical list, with groups, sub-tasks and dependencies.</sub></td>
+<td width="50%"><a href="docs/screenshots/kanban.jpg"><img src="docs/screenshots/kanban.jpg" alt="Kanban view"></a><br><sub><b>Kanban view</b> — All tasks on a Kanban board, with blocked tasks highlighted.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/calendar.jpg"><img src="docs/screenshots/calendar.jpg" alt="Calendar view"></a><br><sub><b>Calendar view</b> — Weekly calendar with time-blocking and a panel of unscheduled tasks.</sub></td>
+<td width="50%"><a href="docs/screenshots/gantt.jpg"><img src="docs/screenshots/gantt.jpg" alt="Gantt view"></a><br><sub><b>Gantt view</b> — Timeline of groups and tasks with dependency links.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/graph-compact.jpg"><img src="docs/screenshots/graph-compact.jpg" alt="Graph view — compact"></a><br><sub><b>Graph view — compact</b> — Groups and tasks as a tree, filtered by a custom filter.</sub></td>
+<td width="50%"><a href="docs/screenshots/graph-opened.jpg"><img src="docs/screenshots/graph-opened.jpg" alt="Graph view — expanded"></a><br><sub><b>Graph view — expanded</b> — The whole task tree expanded on the canvas.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/graph-zoom.jpg"><img src="docs/screenshots/graph-zoom.jpg" alt="Graph view — zoom"></a><br><sub><b>Graph view — zoom</b> — Zoomed-in detail of the Graph canvas.</sub></td>
+<td width="50%"><a href="docs/screenshots/settings.jpg"><img src="docs/screenshots/settings.jpg" alt="Settings"></a><br><sub><b>Settings</b> — Appearance, language, reminders, shortcuts and startup options.</sub></td>
+</tr>
+</table>
 
 > **Status:** early release (1.2.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
 

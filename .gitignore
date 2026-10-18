@@ -10,3 +10,4 @@ _wip
 _to_delete
 *.rar
 SPECS.md
+package-lock.json
