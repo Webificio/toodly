@@ -35,10 +35,11 @@
 			]
 		},
 		{
-			title: 'Vista Graph',
+			title: 'Viste Graph, Orbit e Metro',
 			rows: [
 				['Ctrl + rotella', 'Zoom in avanti / indietro'],
-				['Trascina', 'Sposta l’area (trascina lo sfondo)']
+				['Trascina', 'Sposta l’area (trascina lo sfondo)'],
+				['Passa il mouse su un punto', 'Scheda del task con azioni rapide (Orbit e Metro)']
 			]
 		}
 	];

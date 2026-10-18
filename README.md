@@ -51,9 +51,9 @@ You can also build them yourself, see [Building](#building).
 ## Highlights
 
 - **Tasks** with 4 priorities, hierarchical sub-tasks, **dependencies** ("waiting" until prerequisites are done), due date and start/end time, recurrence, drag & drop reordering.
-- **Views**: List, Kanban (by status or priority), Gantt, Graph (groups and tasks as a tree on a pannable, zoomable canvas), monthly and weekly Calendar with time-blocking, smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
+- **Views**: List, Kanban (by status or priority), Gantt, Graph (groups and tasks as a tree on a pannable, zoomable canvas), **Orbit** (a radar: today at the centre, time rings, one sector per group) and **Metro** (a subway map: one line per group, one station per task, time flowing right), monthly and weekly Calendar with time-blocking, smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
 - **Themes**: Default, Material, CRT (green phosphor), Nord, Solarized, Dracula, Gruvbox and Rosé Pine, each in light and dark (Settings → Appearance). Adding your own takes one CSS block, see [docs/THEMES.md](docs/THEMES.md).
-- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt and Graph views with Mermaid export, statistics.
+- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt, Graph, Orbit and Metro views with Mermaid export, statistics.
 - **Groups and sub-groups** (folders) independent from lists, multi-selection with bulk edits, bulk creation of tasks from pasted text or Markdown.
 - **Rich task details**: Markdown description, multiple notes, file attachments.
 - **Multi-window**: every window opens its own **data set**; position, size, sidebar width and view of each window are saved and restored on restart (multi-monitor aware).

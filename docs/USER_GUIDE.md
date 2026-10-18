@@ -31,7 +31,7 @@ If you already have several data sets, toodly asks which one to open in each new
 ## 2. The window
 
 - **Sidebar (left)**: smart views (*Today*, *Next 7 days*, *Important*, *All tasks*), your **Lists**, your **Filters**, and the buttons for settings, a new window and bulk import. Drag the thin line between the sidebar and the main area to resize it (double-click to reset). Each window remembers its own sidebar width.
-- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*, *Graph*), sorting and grouping options, and the calendar navigation.
+- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*, *Graph*, *Orbit*, *Metro*), sorting and grouping options, and the calendar navigation.
 - **Main area**: your tasks in the selected view.
 - **Detail panel (right)**: opens when you click a task. Click outside it, or press **Esc**, to close it.
 
@@ -116,6 +116,21 @@ A timeline of your tasks. On the left you see the same hierarchy as the List (gr
 - **Show in Gantt**: each task has a switch in the detail panel (or use the eye button that appears on hover in the Gantt tree). A task that is not shown keeps its place in the hierarchy but becomes a **thin, faint row without a bar**; untick *Show excluded* to hide those rows completely.
 - **Export to Mermaid**: the *Mermaid* button saves the whole Gantt as a Markdown file with a `mermaid` diagram, and the copy button puts the same text on the clipboard. Groups become sections, sub-tasks follow their parent, and only tasks that are shown in the Gantt and have a due date are included.
 - The Gantt follows the selected list or filter; with *Today* and *Next 7 days* it shows all tasks, like the Calendar.
+
+### Orbit
+
+A radar of the tasks in the current view. **Today** is the centre (the number is how many tasks are overdue or due today); each ring is a time band — *Overdue*, *Today*, *Within 7 days*, *Within 30 days*, *Later*, *No date* — and each **group** is a sector in the group's colour (sub-groups and sub-tasks sit in the sector of their top-level group). The closer to the centre, the more urgent.
+
+- Bubbles are coloured by group; a small dot marks the priority, a red ring means overdue, a dashed border means blocked, faded means completed (shown with the *Completed* toggle).
+- **Hover** (or select) a bubble to get its card: checkbox, group path, due date, list and the quick actions. **Click** selects it and opens the details panel; `Ctrl`/`Shift` + click multi-selects; `↑`/`↓` move between tasks.
+- Dependencies are dashed arcs between bubbles, red when the prerequisite is late.
+- Same add bar, pan (drag the background), zoom (`Ctrl` + wheel or slider) and minimap as the Graph.
+
+### Metro
+
+A subway map of the tasks in the current view. Each **group** is a line, each task a station; the horizontal axis is time (columns for each due date, *Overdue* on the left and *No date* on the right) with a vertical *Today* marker. Tasks due the same day on the same line fan out above and below it. Dependencies are dashed links between stations — the interchanges between lines — red when late. Hover, click, selection, add bar, pan, zoom and minimap work as in Orbit and Graph.
+
+- **Export to Mermaid** (Orbit and Metro, top right): *Mermaid* saves a Markdown file, the copy button puts the text on the clipboard. Metro becomes a flowchart (one subgraph per line, dependencies dashed); Orbit becomes a mind map (group → time band → tasks).
 
 ### Graph
 

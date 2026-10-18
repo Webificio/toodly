@@ -23,7 +23,7 @@
 		{ icon: Search, title: 'Trova tutto al volo', text: 'Premi Ctrl+K per cercare nei titoli e nelle descrizioni, filtrare per lista e priorità e saltare direttamente al task.' },
 		{ icon: Undo2, title: 'Nessun timore di sbagliare', text: 'Ctrl+Z annulla le ultime operazioni (anche le eliminazioni), Ctrl+Y le ripete. Dopo un\'eliminazione trovi anche il pulsante «Annulla».' },
 		{ icon: Bell, title: 'Promemoria', text: 'Nel dettaglio di un task scegli un promemoria: riceverai una notifica di sistema, anche con toodly nel tray.' },
-		{ icon: ChartGantt, title: 'Viste e statistiche', text: 'Passa tra Lista, Kanban, Calendario, Gantt e Graph dalla barra in alto. Nel piè di pagina della barra laterale trovi le statistiche.' }
+		{ icon: ChartGantt, title: 'Viste e statistiche', text: 'Passa tra Lista, Kanban, Calendario, Gantt, Graph, Orbit e Metro dalla barra in alto. Nel piè di pagina della barra laterale trovi le statistiche.' }
 	];
 	const last = $derived(step === steps.length - 1);
 	const cur = $derived(steps[step]);

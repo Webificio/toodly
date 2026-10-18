@@ -12,7 +12,7 @@ export const nav = {
 	},
 	get mode(): Mode {
 		const m = page.url.searchParams.get('mode');
-		return m === 'kanban' || m === 'calendar' || m === 'gantt' || m === 'graph' ? m : 'list';
+		return m === 'kanban' || m === 'calendar' || m === 'gantt' || m === 'graph' || m === 'orbit' || m === 'metro' ? m : 'list';
 	},
 	get sort(): SortMode {
 		const s = page.url.searchParams.get('sort');

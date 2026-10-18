@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
+	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, Orbit, TrainFront, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { nav, go, ui } from '../nav.svelte';
@@ -12,7 +12,9 @@
 		{ id: 'kanban', label: 'Kanban', icon: Columns3 },
 		{ id: 'calendar', label: 'Calendario', icon: CalendarDays },
 		{ id: 'gantt', label: 'Gantt', icon: ChartGantt },
-		{ id: 'graph', label: 'Graph', icon: Network }
+		{ id: 'graph', label: 'Graph', icon: Network },
+		{ id: 'orbit', label: 'Orbit', icon: Orbit },
+		{ id: 'metro', label: 'Metro', icon: TrainFront }
 	] as const;
 	const sorts = [
 		{ id: 'manual', label: 'Manuale (trascina)', short: 'Manuale' },

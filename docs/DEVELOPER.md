@@ -35,7 +35,7 @@ src/
   routes/
     +layout.svelte           app shell: sidebar, resizer, dialogs, window bootstrap
     +layout.ts               ssr = false, prerender = false
-    +page.svelte             current view (list / kanban / calendar / gantt / graph)
+    +page.svelte             current view (list / kanban / calendar / gantt / graph / orbit / metro)
   lib/
     store.svelte.ts          reactive state + all DB writes
     db.ts                    per-set DB connection cache, exec/select helpers
@@ -58,6 +58,9 @@ src/
     themes.css               (src/) theme blocks: colours, shapes, shadows, Graph group tints; see THEMES.md
     exportgraph.ts           Graph → Mermaid (.md) export (save dialog; the pure `graphToMermaid` lives in graph.ts)
     components/GraphView.svelte   Graph: canvas (native scroll + scaled world), minimap, zoom, drag & drop; GraphGroup / GraphTask are its nodes
+    maps.ts                  Orbit + Metro: shared pure helpers (root group per task, colours, breadcrumb, label picking, polar coordinates)
+    orbit.ts / metro.ts      Orbit radar and Metro subway layouts + `orbitToMermaid` / `metroToMermaid` (pure; tests/maps.test.ts); exportmap.ts saves them
+    components/OrbitView.svelte, MetroView.svelte   the two views; MapCanvas (pan/zoom/minimap), MapNode (bubble + hover card), MapBar (add bar) are shared
     graph.ts                 Graph: pure layout (nodes, connectors, palette, dependency curves), unit-tested in tests/graph.test.ts
     uiprefs.svelte.ts        UI preferences (task numbering) in localStorage
     layoutui.svelte.ts       per-window sidebar width

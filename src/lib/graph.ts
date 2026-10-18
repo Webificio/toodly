@@ -394,7 +394,7 @@ export function fitScale(w: number, h: number, vw: number, vh: number, min = 0.2
 
 // ---- esportazione Mermaid ----------------------------------------------------------
 /** Testo sicuro per un'etichetta Mermaid tra virgolette. */
-const mmLabel = (s: string) => s.replace(/\s+/g, ' ').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;').replace(/%%/g, '%').trim() || '-';
+export const mmLabel = (s: string) => s.replace(/\s+/g, ' ').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;').replace(/%%/g, '%').trim() || '-';
 
 /**
  * Diagramma Mermaid (`flowchart LR`) dei task del Graph: ogni gruppo e sottogruppo è un `subgraph`,
