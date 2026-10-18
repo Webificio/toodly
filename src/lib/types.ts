@@ -84,7 +84,7 @@ export interface Filter {
 	created_at: string;
 }
 
-export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt';
+export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt' | 'graph';
 export type SortMode = 'manual' | 'priority' | 'due';
 
 export const PRIORITIES: { value: Priority; label: string; cls: string }[] = [

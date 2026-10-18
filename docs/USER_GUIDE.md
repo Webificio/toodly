@@ -31,7 +31,7 @@ If you already have several data sets, toodly asks which one to open in each new
 ## 2. The window
 
 - **Sidebar (left)**: smart views (*Today*, *Next 7 days*, *Important*, *All tasks*), your **Lists**, your **Filters**, and the buttons for settings, a new window and bulk import. Drag the thin line between the sidebar and the main area to resize it (double-click to reset). Each window remembers its own sidebar width.
-- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*), sorting and grouping options, and the calendar navigation.
+- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*, *Graph*), sorting and grouping options, and the calendar navigation.
 - **Main area**: your tasks in the selected view.
 - **Detail panel (right)**: opens when you click a task. Click outside it, or press **Esc**, to close it.
 
@@ -116,6 +116,17 @@ A timeline of your tasks. On the left you see the same hierarchy as the List (gr
 - **Show in Gantt**: each task has a switch in the detail panel (or use the eye button that appears on hover in the Gantt tree). A task that is not shown keeps its place in the hierarchy but becomes a **thin, faint row without a bar**; untick *Show excluded* to hide those rows completely.
 - **Export to Mermaid**: the *Mermaid* button saves the whole Gantt as a Markdown file with a `mermaid` diagram, and the copy button puts the same text on the clipboard. Groups become sections, sub-tasks follow their parent, and only tasks that are shown in the Gantt and have a due date are included.
 - The Gantt follows the selected list or filter; with *Today* and *Next 7 days* it shows all tasks, like the Calendar.
+
+### Graph
+
+Groups, sub-groups, tasks and sub-tasks drawn as a tree on a large canvas. The bar at the top is the same as in the List (new task, new task from a template, new group).
+
+- **Move around**: drag the background, or use the scroll bars. **Zoom**: `Ctrl` + mouse wheel (or pinch on a trackpad), the *Zoom* slider, or the arrows next to the minimap (the dash fits everything in the window).
+- **Minimap** (bottom left): always shows the whole graph and a box with the part you are looking at; click it to jump, or drag the box.
+- **Groups** have one of 20 blue/violet tints, assigned in rotation to the top-level groups (sub-groups, tasks and arrows take the colour of their group; tones differ between the light and dark theme). Click a group to fold or unfold it (the state is shared with the List and the Gantt); hover it for *add task*, *new sub-group* and *edit*. Tasks without a group sit under a *No group* node.
+- **Tasks** look like in the List: priority-coloured checkbox, red date when overdue, dashed outline when waiting for another task, dimmed when completed, number (if enabled in Settings), sub-task counter. Click to open the details panel; `Ctrl`/`Shift`+click to select several; hover for the quick actions; the arrow on the card folds its sub-tasks.
+- **Drag & drop**: drag a card above or below another one to reorder it (and to make it a sibling of that task), onto a group to move it there, or to the strip at the bottom to take it out of all groups. Groups can be dragged onto other groups the same way. Positions on the canvas are always automatic: only the order is yours.
+- **Dependencies** are drawn as dashed arrows, like in the Gantt (red when the prerequisite ends after the dependent task starts). *Completed* shows or hides finished tasks; the two chevron buttons fold or unfold everything.
 
 ### Smart views
 

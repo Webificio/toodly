@@ -7,9 +7,10 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-10-12
+## [1.0.2] - 2026-10-18
 
 ### Added
+- **Graph view**: groups, sub-groups, tasks and sub-tasks drawn as a tree on a pannable canvas. Same add bar as the List (task, template, group), same colours (priority, overdue, blocked), same quick actions, details panel, selection, drag & drop (reorder, move into a group, out of the groups) and live numbering. Groups use a rotating palette of 20 blue/violet tints (separate tones for the light and dark theme), collapse like in the List and the Gantt, and dependency arrows are drawn as in the Gantt. Drag the background to move around, `Ctrl` + wheel or the slider to zoom, minimap with the current view box.
 - **Global search** (`Ctrl+K`) over titles, descriptions and tags, with list and priority filters.
 - **Undo / redo** (`Ctrl+Z`, `Ctrl+Y`) for edits, completion, moves and deletions (also bulk), with an "Undo" notice after deleting.
 - **Reminders** per task with system notifications (tray included), default time for tasks without a start time.
@@ -48,7 +49,7 @@ The section of the version being released is used as the text of the GitHub rele
 ### Added
 - First public version: tasks, sub-tasks, dependencies, lists, groups, filters, List / Kanban / Calendar views, multi-window data sets, tray, Quick Add, backup and restore, Italian and English UI.
 
-[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/atlantidezign/toodly/compare/v1.0.1...v1.1.0
+[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/atlantidezign/toodly/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/atlantidezign/toodly/releases/tag/v1.0.1
 [1.0.0]: https://github.com/atlantidezign/toodly/releases/tag/v1.0.0

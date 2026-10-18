@@ -1,6 +1,6 @@
 {
   "name": "toodly",
-  "version": "1.1.0",
+  "version": "1.0.2",
   "description": "App desktop per la gestione dei task personali in stile TickTick: liste, Kanban, calendario, set di dati multi-finestra. Tauri v2 + SvelteKit.",
   "keywords": [
     "todo",

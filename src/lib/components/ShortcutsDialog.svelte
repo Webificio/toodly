@@ -33,6 +33,13 @@
 				['Ctrl+A', 'Seleziona tutti'],
 				['Esc', 'Chiudi il pannello o azzera la selezione']
 			]
+		},
+		{
+			title: 'Vista Graph',
+			rows: [
+				['Ctrl + rotella', 'Zoom in avanti / indietro'],
+				['Trascina', 'Sposta l’area (trascina lo sfondo)']
+			]
 		}
 	];
 </script>
@@ -46,7 +53,7 @@
 					{#each g.rows as [k, label]}
 						<div class="flex items-center gap-3">
 							<span class="flex-1">{t(label)}</span>
-							<kbd class="rounded-md border border-border bg-hover px-1.5 py-0.5 font-mono text-[11.5px] text-muted">{k}</kbd>
+							<kbd class="rounded-md border border-border bg-hover px-1.5 py-0.5 font-mono text-[11.5px] text-muted">{t(k)}</kbd>
 						</div>
 					{/each}
 				</div>

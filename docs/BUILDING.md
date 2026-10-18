@@ -23,8 +23,8 @@ Other scripts: `npm run check` (svelte-check), `npm run build` (**frontend only*
 
 | System | Direct executable | Installers / packages (`src-tauri/target/release/bundle/…`) |
 |---|---|---|
-| **Windows** | `src-tauri/target/release/toodly.exe` (requires WebView2) | `nsis/toodly_1.1.0_x64-setup.exe`, `msi/toodly_1.1.0_x64_en-US.msi` |
-| **macOS** | — | `macos/toodly.app`, `dmg/toodly_1.1.0_<arch>.dmg` |
+| **Windows** | `src-tauri/target/release/toodly.exe` (requires WebView2) | `nsis/toodly_1.0.2_x64-setup.exe`, `msi/toodly_1.0.2_x64_en-US.msi` |
+| **macOS** | — | `macos/toodly.app`, `dmg/toodly_1.0.2_<arch>.dmg` |
 | **Linux** | `src-tauri/target/release/toodly` | `deb/*.deb`, `rpm/*.rpm`, `appimage/*.AppImage` |
 
 Useful commands:

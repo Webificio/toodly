@@ -1,5 +1,5 @@
 // Prints the CHANGELOG.md section of a version (used as GitHub release notes).
-// Usage: node scripts/release-notes.mjs 1.1.0   (a leading "v" is accepted)
+// Usage: node scripts/release-notes.mjs 1.0.2   (a leading "v" is accepted)
 import { readFileSync } from 'node:fs';
 
 const version = (process.argv[2] ?? '').replace(/^v/, '');

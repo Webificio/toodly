@@ -35,7 +35,7 @@ src/
   routes/
     +layout.svelte           app shell: sidebar, resizer, dialogs, window bootstrap
     +layout.ts               ssr = false, prerender = false
-    +page.svelte             current view (list / kanban / calendar)
+    +page.svelte             current view (list / kanban / calendar / gantt / graph)
   lib/
     store.svelte.ts          reactive state + all DB writes
     db.ts                    per-set DB connection cache, exec/select helpers
@@ -55,6 +55,8 @@ src/
     groupui.svelte.ts        collapsed groups per data set + view (localStorage)
     components/GanttView.svelte   Gantt: tree (groups/tasks) + timeline, drag/resize bars, dependency arrows
     exportgantt.ts           Gantt → Mermaid (.md) export
+    components/GraphView.svelte   Graph: canvas (native scroll + scaled world), minimap, zoom, drag & drop; GraphGroup / GraphTask are its nodes
+    graph.ts                 Graph: pure layout (nodes, connectors, palette, dependency curves), unit-tested in tests/graph.test.ts
     uiprefs.svelte.ts        UI preferences (task numbering) in localStorage
     layoutui.svelte.ts       per-window sidebar width
     theme.svelte.ts          light / dark / system
@@ -198,6 +200,8 @@ Window-creating commands are `async` and handlers go through `spawn_new_window` 
 New `tasks` columns (guarded by `addColumn`): `tags` (lowercase words separated by spaces; `src/lib/tags.ts` normalizes/parses; `Task.tags` is a `string[]`, converted in `applyPatch` and on load), `recur_until` (ISO date) and `milestone` (0/1). `recurrence` is now a free string: `none | daily | weekly | monthly | yearly | weekdays | monthend | dow:1,4` (0 = Sunday); `nextOccurrence()` in `dates.ts` interprets it and `spawnNextOccurrence` shifts the other dates by the same day delta. `parseQuick(text, lists, withTags = true)` returns `tags` (bulk import passes `false`). The `tag:<name>` scope and the `tag` filter rule live in `views.ts`. `EXPORT_FORMAT_VERSION` is unchanged: backups copy the columns that both sides have.
 
 GanttView extras: `critical` (tight dependency chain ending at the latest end date), `lateIds`/`lateKeep`, link-drag (`startLink`, `store.addDep`) and row virtualization (`win`/`visible`, active above 120 rows). Appearance prefs (`density`, `textScale`) are applied to `<html>` (`data-density`, CSS `zoom`) by `uiprefs.svelte.ts`.
+
+GraphView: `graph.ts` is pure (no Svelte, store or DOM) and unit-tested (`tests/graph.test.ts`). `buildGraph()` takes the groups and the already-sorted tasks of the view and returns nodes (`group` / `task` / `add`), connectors and the size of the graph; layout is a stacked tree (root groups side by side, children below with a rounded elbow, sub-tasks indented) and positions are never stored: the manual `sort` only orders siblings. `depEdges()` / `depPath()` give the dependency curves. Colours: top-level groups take an index into `PALETTE` (20 entries, by creation order); each node carries `--gh` / `--gl` (`paletteStyle()`), and the CSS in `GraphView.svelte` turns them into `--gfill`, `--gborder`, `--gacc` with one set of tones for the light and one for the dark theme (`.dark .gx`). The canvas uses native scrolling (`data-scroll="xy"`, so `dnd.svelte.ts` auto-scroll and the global `scrollIntoView` keyboard navigation work) around a scaled "world" `div`; the minimap and the zoom pivot convert pointer coordinates with the ratio `getBoundingClientRect().width / offsetWidth` so they stay correct when the interface size setting uses CSS `zoom`. Cards are `[data-task][data-task-id]` so selection, keyboard navigation and the details panel need no special code. Zoom and scroll position are kept in a module-level map per data set and view (in memory only).
 
 ### Adding a command
 
