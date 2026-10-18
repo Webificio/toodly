@@ -7,6 +7,9 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+### Added
+- **Graph view**: *Mermaid* export, like the Gantt. The button in the top-right toolbar saves a Markdown file with a ```` ```mermaid flowchart ```` diagram (groups and sub-groups as subgraphs, sub-task and dependency arrows), and the copy button puts it on the clipboard.
+
 ## [1.2.0] - 2026-10-18
 
 ### Added

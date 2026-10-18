@@ -55,6 +55,7 @@ src/
     groupui.svelte.ts        collapsed groups per data set + view (localStorage)
     components/GanttView.svelte   Gantt: tree (groups/tasks) + timeline, drag/resize bars, dependency arrows
     exportgantt.ts           Gantt → Mermaid (.md) export
+    exportgraph.ts           Graph → Mermaid (.md) export (save dialog; the pure `graphToMermaid` lives in graph.ts)
     components/GraphView.svelte   Graph: canvas (native scroll + scaled world), minimap, zoom, drag & drop; GraphGroup / GraphTask are its nodes
     graph.ts                 Graph: pure layout (nodes, connectors, palette, dependency curves), unit-tested in tests/graph.test.ts
     uiprefs.svelte.ts        UI preferences (task numbering) in localStorage

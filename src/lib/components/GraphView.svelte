@@ -6,17 +6,18 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { ChevronDown, ChevronUp, ChevronsDownUp, ChevronsUpDown, Eye, EyeOff, FolderPlus, Inbox, LayoutTemplate, Minus } from '@lucide/svelte';
+	import { ChevronDown, ChevronUp, ChevronsDownUp, ChevronsUpDown, Copy, Download, Eye, EyeOff, FolderPlus, Inbox, LayoutTemplate, Minus } from '@lucide/svelte';
 	import GraphGroup from './GraphGroup.svelte';
 	import GraphTask from './GraphTask.svelte';
 	import QuickInput from './QuickInput.svelte';
-	import { buildGraph, depEdges, fitScale, paletteStyle, UNGROUPED, type GNode } from '../graph';
+	import { buildGraph, depEdges, graphToMermaid, fitScale, paletteStyle, UNGROUPED, type GNode } from '../graph';
 	import { collapsedGroups, expandGroup, loadCollapsed, toggleGroup } from '../groupui.svelte';
 	import { currentWorkspace } from '../db';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { setVisibleOrder } from '../selection.svelte';
-	import { nav, ui } from '../nav.svelte';
+	import { nav, ui, showToast } from '../nav.svelte';
+	import { exportGraphMd } from '../exportgraph';
 	import { inScope, parseScope, sortTasks } from '../views';
 	import { parseQuick } from '../quickparse';
 	import { addDays, todayISO } from '../dates';
@@ -53,6 +54,35 @@
 	$effect(() => setVisibleOrder(model.taskOrder));
 
 	const groupName = (gid: string) => (gid ? (store.groupsById.get(gid)?.name ?? '') : t('Senza gruppo'));
+
+	// ---- esportazione Mermaid -----------------------------------------------------------
+	const exportTitle = $derived.by(() => {
+		if (scopeInfo.kind === 'list') return store.listOf(scopeInfo.id)?.name ?? t('Lista');
+		if (scopeInfo.kind === 'tag') return '#' + scopeInfo.id;
+		if (scopeInfo.kind === 'filter') return store.filters.find((f) => f.id === scopeInfo.id)?.name ?? t('Filtro');
+		return t('Tutti i task');
+	});
+	const exportInput = () => ({ groups: store.groups, tasks: sorted, showDone, ungroupedLabel: t('Senza gruppo') });
+	async function exportMermaid() {
+		try {
+			const dest = await exportGraphMd(exportInput(), store.deps, exportTitle);
+			if (dest === 'empty') showToast(t('Nessun task da esportare nel grafo'));
+			else if (dest) showToast(t('Grafo esportato in Mermaid'));
+		} catch (e) {
+			console.error(e);
+			showToast(t('Esportazione non riuscita'));
+		}
+	}
+	async function copyMermaid() {
+		const md = graphToMermaid(exportInput(), store.deps, exportTitle);
+		if (!md) return showToast(t('Nessun task da esportare nel grafo'));
+		try {
+			await navigator.clipboard.writeText(md);
+			showToast(t('Mermaid copiato negli appunti'));
+		} catch {
+			showToast(t('Operazione non riuscita'));
+		}
+	}
 
 	// ---- aggiunta di task e gruppi (la barra è quella della Lista) -----------------------
 	/** nella vista di un'etichetta i nuovi task la ricevono */
@@ -420,6 +450,9 @@
 			<span class="h-4 w-px bg-border"></span>
 			<button class="icon-btn size-7" title={t('Comprimi tutto')} aria-label={t('Comprimi tutto')} onclick={collapseAll}><ChevronsDownUp size={15} /></button>
 			<button class="icon-btn size-7" title={t('Espandi tutto')} aria-label={t('Espandi tutto')} onclick={expandAll}><ChevronsUpDown size={15} /></button>
+			<span class="h-4 w-px bg-border"></span>
+			<button class="btn h-7 border-transparent bg-transparent" title={t('Esporta in Mermaid (.md)')} onclick={exportMermaid}><Download size={14} />Mermaid</button>
+			<button class="icon-btn size-7" title={t('Copia Mermaid')} aria-label={t('Copia Mermaid')} onclick={copyMermaid}><Copy size={15} /></button>
 		</div>
 
 		<!-- minimappa e zoom, in basso a sinistra -->

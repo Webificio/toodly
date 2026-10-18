@@ -127,6 +127,7 @@ Groups, sub-groups, tasks and sub-tasks drawn as a tree on a large canvas. The b
 - **Tasks** look like in the List: priority-coloured checkbox, red date when overdue, dashed outline when waiting for another task, dimmed when completed, number (if enabled in Settings), sub-task counter. Click to open the details panel; `Ctrl`/`Shift`+click to select several; hover for the quick actions; the arrow on the card folds its sub-tasks.
 - **Drag & drop**: drag a card above or below another one to reorder it (and to make it a sibling of that task), onto a group to move it there, or to the strip at the bottom to take it out of all groups. Groups can be dragged onto other groups the same way. Positions on the canvas are always automatic: only the order is yours.
 - **Dependencies** are drawn as dashed arrows, like in the Gantt (red when the prerequisite ends after the dependent task starts). *Completed* shows or hides finished tasks; the two chevron buttons fold or unfold everything.
+- **Export to Mermaid**: the *Mermaid* button (top right) saves the graph as a Markdown file with a `mermaid` flowchart, and the copy button puts the same text on the clipboard. Groups and sub-groups become boxes, sub-tasks are linked to their parent with a solid arrow and dependencies with a dashed one. Everything in the view is exported, even folded groups; *Completed* is respected.
 
 ### Smart views
 

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/lib/i18n.svelte', () => ({ t: (s: string) => s, locale: () => 'it', i18n: { lang: 'it' } }));
 
-import { PALETTE, UNGROUPED, buildGraph, depEdges, depPath, elbow, fitScale, L, paletteAt, paletteStyle, type GNode, type GraphInput } from '../src/lib/graph';
+import { PALETTE, UNGROUPED, buildGraph, depEdges, depPath, elbow, fitScale, graphToMermaid, L, paletteAt, paletteStyle, type GNode, type GraphInput } from '../src/lib/graph';
 import type { Group } from '../src/lib/types';
 import { mkTask } from './helpers';
 
@@ -201,5 +201,43 @@ describe('fitScale', () => {
 		expect(fitScale(400, 300, 1000, 800)).toBe(1);
 		expect(fitScale(100000, 100000, 1000, 800)).toBe(0.2);
 		expect(fitScale(0, 0, 1000, 800)).toBe(1);
+	});
+});
+
+describe('graphToMermaid', () => {
+	const groups = [grp('w', 'WORK', null, 1, '2026-01-01'), grp('s', 'Sub', 'w', 1, '2026-01-02'), grp('e', 'Vuoto', null, 2, '2026-01-03')];
+	const tasks = [
+		mkTask({ id: 'a', group_id: 'w', title: 'A "uno"', sort: 1, due_date: '2026-10-20', priority: 3 }),
+		mkTask({ id: 'a1', parent_id: 'a', title: 'A1', sort: 1, completed: true }),
+		mkTask({ id: 'b', group_id: 's', title: 'B', sort: 1, status: 'doing', milestone: true }),
+		mkTask({ id: 'c', group_id: null, title: 'C', sort: 1 })
+	];
+	const deps = [{ task_id: 'b', depends_on_id: 'a', created_at: '' }];
+	const gen = (over = {}) => graphToMermaid({ groups, tasks, showDone: true, ungroupedLabel: 'Senza gruppo', ...over }, deps, 'Titolo');
+
+	it('è vuoto senza task', () => {
+		expect(graphToMermaid({ groups, tasks: [], showDone: true, ungroupedLabel: 'x' }, [], 'T')).toBe('');
+	});
+	it('produce un flowchart con subgraph annidati, sotto-task e dipendenze', () => {
+		const md = gen();
+		expect(md).toContain('```mermaid');
+		expect(md).toContain('flowchart LR');
+		expect(md).toContain('subgraph g1["WORK"]');
+		expect(md).toContain('subgraph g2["Sub"]');
+		expect(md).toContain('subgraph g3["Senza gruppo"]');
+		expect(md).not.toContain('Vuoto');
+		expect(md).toContain('t2["A #quot;uno#quot;<br/>2026-10-20"]');
+		expect(md).toMatch(/t2 --> t3/);
+		expect(md).toMatch(/t2 -\.-> t1/);
+		expect(md).toContain('t1{"B"}');
+	});
+	it('assegna le classi done / doing / crit', () => {
+		const md = gen();
+		expect(md).toContain('class t3 done');
+		expect(md).toContain('class t1 doing');
+		expect(md).toContain('class t2 crit');
+	});
+	it('rispetta «mostra completati»', () => {
+		expect(gen({ showDone: false })).not.toContain('A1');
 	});
 });

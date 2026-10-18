@@ -60,6 +60,8 @@
 	"Copia Mermaid": "Copy Mermaid",
 	"Nessun task da esportare nel Gantt": "No tasks to export from the Gantt",
 	"Gantt esportato in Mermaid": "Gantt exported as Mermaid",
+	"Nessun task da esportare nel grafo": "No tasks to export from the graph",
+	"Grafo esportato in Mermaid": "Graph exported as Mermaid",
 	"Mermaid copiato negli appunti": "Mermaid copied to the clipboard",
 	"Giorni": "Days",
 	"Settimane": "Weeks",

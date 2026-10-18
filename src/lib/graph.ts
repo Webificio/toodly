@@ -391,3 +391,97 @@ export function fitScale(w: number, h: number, vw: number, vh: number, min = 0.2
 	if (w <= 0 || h <= 0 || vw <= 0 || vh <= 0) return max;
 	return Math.min(max, Math.max(min, Math.min(vw / w, vh / h)));
 }
+
+// ---- esportazione Mermaid ----------------------------------------------------------
+/** Testo sicuro per un'etichetta Mermaid tra virgolette. */
+const mmLabel = (s: string) => s.replace(/\s+/g, ' ').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;').replace(/%%/g, '%').trim() || '-';
+
+/**
+ * Diagramma Mermaid (`flowchart LR`) dei task del Graph: ogni gruppo e sottogruppo è un `subgraph`,
+ * ogni task un nodo (rombo per le milestone) con la scadenza sotto il titolo; i sotto-task sono collegati
+ * al padre con una freccia piena, le dipendenze (prerequisito → task che aspetta) con una freccia tratteggiata.
+ * I gruppi chiusi nella vista sono comunque esportati per intero; quelli senza task no. Completati, in corso
+ * e priorità alta sono classi (`done`, `doing`, `crit`) come nell'export del Gantt. Restituisce '' se non c'è nulla.
+ */
+export function graphToMermaid(inp: Pick<GraphInput, 'groups' | 'tasks' | 'showDone' | 'ungroupedLabel'>, deps: Dep[], title: string): string {
+	const m = buildGraph({ ...inp, collapsedGroups: new Set(), collapsedTasks: new Set(), addingIn: null });
+	const taskNodes = m.nodes.filter((n) => n.kind === 'task' && n.task);
+	if (!taskNodes.length) return '';
+
+	// contenitore (gruppo) di ogni task: quello del task più in alto della sua catena di padri
+	const containerOf = (n: GNode): string => {
+		let cur = n;
+		for (let guard = 0; cur.parentTaskId && guard < 50; guard++) {
+			const up = m.byTask.get(cur.parentTaskId);
+			if (!up) break;
+			cur = up;
+		}
+		return cur.groupId ?? UNGROUPED;
+	};
+	const tasksIn = new Map<string, GNode[]>();
+	for (const n of taskNodes) {
+		const k = containerOf(n);
+		const a = tasksIn.get(k) ?? [];
+		a.push(n);
+		tasksIn.set(k, a);
+	}
+
+	const groupNodes = m.nodes.filter((n) => n.kind === 'group');
+	const present = new Set(groupNodes.map((g) => g.id));
+	const subs = new Map<string | null, GNode[]>();
+	for (const g of groupNodes) {
+		const p = g.group?.parent_id && present.has(g.group.parent_id) ? g.group.parent_id : null;
+		const a = subs.get(p) ?? [];
+		a.push(g);
+		subs.set(p, a);
+	}
+	const hasContent = (gid: string): boolean => (tasksIn.get(gid)?.length ?? 0) > 0 || (subs.get(gid) ?? []).some((s) => hasContent(s.id));
+
+	const ids = new Map<string, string>();
+	let gi = 0;
+	let ti = 0;
+	const idOf = (n: GNode) => {
+		let v = ids.get(n.key);
+		if (!v) ids.set(n.key, (v = (n.kind === 'group' ? 'g' : 't') + (n.kind === 'group' ? ++gi : ++ti)));
+		return v;
+	};
+
+	const lines: string[] = [];
+	const cls = { done: [] as string[], doing: [] as string[], crit: [] as string[] };
+	const taskLine = (n: GNode, ind: string) => {
+		const x = n.task!;
+		const id = idOf(n);
+		const label = mmLabel(x.title) + (x.due_date ? `<br/>${x.due_date}` : '');
+		lines.push(x.milestone ? `${ind}${id}{"${label}"}` : `${ind}${id}["${label}"]`);
+		if (x.completed) cls.done.push(id);
+		else {
+			if (x.status === 'doing') cls.doing.push(id);
+			if (x.priority === 3) cls.crit.push(id);
+		}
+	};
+	const emitGroup = (g: GNode, ind: string) => {
+		if (!hasContent(g.id)) return;
+		lines.push(`${ind}subgraph ${idOf(g)}["${mmLabel(g.name ?? '')}"]`);
+		for (const s of subs.get(g.id) ?? []) emitGroup(s, ind + '    ');
+		for (const n of tasksIn.get(g.id) ?? []) taskLine(n, ind + '    ');
+		lines.push(`${ind}end`);
+	};
+	for (const g of subs.get(null) ?? []) emitGroup(g, '    ');
+
+	// frecce: sotto-task → padre, poi dipendenze
+	for (const n of taskNodes) if (n.parentTaskId && m.byTask.has(n.parentTaskId)) lines.push(`    ${idOf(m.byTask.get(n.parentTaskId)!)} --> ${idOf(n)}`);
+	for (const d of deps) {
+		const pre = m.byTask.get(d.depends_on_id);
+		const post = m.byTask.get(d.task_id);
+		if (pre && post) lines.push(`    ${idOf(pre)} -.-> ${idOf(post)}`);
+	}
+
+	lines.push(
+		'    classDef done fill:#e5e7eb,stroke:#9ca3af,color:#6b7280',
+		'    classDef doing stroke:#f59e0b,stroke-width:2px',
+		'    classDef crit stroke:#ef4444,stroke-width:2px'
+	);
+	for (const k of ['done', 'doing', 'crit'] as const) if (cls[k].length) lines.push(`    class ${cls[k].join(',')} ${k}`);
+
+	return [`# ${title.replace(/\s+/g, ' ').trim()}`, '', '```mermaid', '%%{init: {"flowchart": {"curve": "basis"}}}%%', 'flowchart LR', ...lines, '```', ''].join('\n');
+}
