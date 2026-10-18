@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node.js 20+ and npm
+- Node.js 20.19+ or 22.12+ (not 21.x: Vite 8 needs them) and npm
 - Rust stable (<https://rustup.rs>)
 - Windows: Microsoft C++ Build Tools + WebView2 (already present on up-to-date Windows 10/11)
 - macOS: Xcode Command Line Tools
