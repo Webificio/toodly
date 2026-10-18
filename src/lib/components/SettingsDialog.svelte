@@ -6,7 +6,7 @@
 	import Modal from './Modal.svelte';
 	import { ui, showToast, askConfirm } from '../nav.svelte';
 	import { resetAllData } from '../backup';
-	import { theme, setTheme, type Theme } from '../theme.svelte';
+	import { theme, setTheme, setThemeStyle, isDarkOnly, THEME_STYLES, type Theme, type ThemeStyle } from '../theme.svelte';
 	import { quitApp } from '../windowing';
 	import { t as tt, i18n, setLang, type Lang } from '../i18n.svelte';
 	import Select from './Select.svelte';
@@ -70,6 +70,8 @@
 		{ id: 'dark', label: tt('Scuro'), icon: Moon },
 		{ id: 'system', label: tt('Sistema'), icon: Monitor }
 	]);
+	const styleOptions = $derived(THEME_STYLES.map((s) => ({ value: s.id, label: tt(s.label) })));
+	const darkOnly = $derived(isDarkOnly(theme.style));
 	const languages: { value: Lang; label: string }[] = [
 		{ value: 'it', label: 'Italiano' },
 		{ value: 'en', label: 'English' }
@@ -83,11 +85,20 @@
 			<h4 class="mb-2 text-[11.5px] font-semibold tracking-wider text-muted uppercase">{tt('Aspetto')}</h4>
 			<div class="flex rounded-lg bg-hover p-0.5">
 				{#each themes as th}
-					<button class="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-[12.5px] font-medium {theme.value === th.id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}" onclick={() => setTheme(th.id)}>
+					<button
+						class="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md text-[12.5px] font-medium disabled:opacity-40 {!darkOnly && theme.value === th.id ? 'bg-panel shadow-sm' : 'text-muted hover:text-fg'}"
+						disabled={darkOnly}
+						onclick={() => setTheme(th.id)}
+					>
 						<th.icon size={14} />{th.label}
 					</button>
 				{/each}
 			</div>
+			<div class="mt-3 flex items-center gap-3">
+				<div class="flex-1 font-medium">{tt('Tema')}</div>
+				<div class="w-40"><Select value={theme.style} options={styleOptions} onchange={(v) => setThemeStyle(v as ThemeStyle)} /></div>
+			</div>
+			{#if darkOnly}<p class="mt-1.5 text-[12px] text-muted">{tt('Questo tema è sempre scuro')}</p>{/if}
 		</section>
 
 		<section class="flex items-center gap-3">

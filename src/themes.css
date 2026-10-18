@@ -1,0 +1,560 @@
+/*
+ * Stili grafici (Impostazioni → Aspetto → Tema).
+ * Ogni tema ridefinisce le stesse variabili di app.css: colori, forme (--radius-*, --r-*), ombre e,
+ * per i gruppi della Graph, tinta/saturazione (--g-*). Il blocco chiaro è `:root[data-theme='x']`,
+ * quello scuro `:root[data-theme='x'].dark`. Il font non cambia, salvo CRT (monospazio di sistema).
+ * Per aggiungere un tema: un nuovo blocco qui e una voce in THEME_STYLES (src/lib/theme.svelte.ts).
+ */
+/* ---- Material (Material Design 3) ---- */
+:root[data-theme='material'] {
+	--bg: #fef7ff;
+	--panel: #ffffff;
+	--sidebar: #f3edf7;
+	--elev: #ece6f0;
+	--border: #cac4d0;
+	--fg: #1d1b20;
+	--muted: #49454f;
+	--faint: #79747e;
+	--hover: rgba(29,27,32,0.08);
+	--active: rgba(103,80,164,0.16);
+	--accent: #6750a4;
+	--accent-fg: #ffffff;
+	--p3: #b3261c;
+	--p2: #a15c00;
+	--p1: #1a62c7;
+	--p0: #938f99;
+	--shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 10px 3px rgba(0,0,0,.15);
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-2xl: 28px;
+	--r-ctl: 999px;
+	--r-field: 10px;
+	--r-icon: 999px;
+	--r-menu: 14px;
+	--r-item: 14px;
+	--r-gr: 20px;
+	--r-gs: 16px;
+	--shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 1px 3px 1px rgba(0,0,0,.14);
+	--glow: none;
+	--g-hs: 0;
+	--g-sat: 0.55;
+	--g-ld: 2%;
+	color-scheme: light;
+}
+:root[data-theme='material'].dark {
+	--bg: #141218;
+	--panel: #1d1b20;
+	--sidebar: #211f26;
+	--elev: #2b2930;
+	--border: #49454f;
+	--fg: #e6e0e9;
+	--muted: #cac4d0;
+	--faint: #938f99;
+	--hover: rgba(230,224,233,0.08);
+	--active: rgba(208,188,255,0.18);
+	--accent: #d0bcff;
+	--accent-fg: #381e72;
+	--p3: #f2b8b5;
+	--p2: #ffb951;
+	--p1: #8ab4f8;
+	--p0: #938f99;
+	--shadow: 0 1px 3px rgba(0,0,0,.5), 0 6px 14px 4px rgba(0,0,0,.35);
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-2xl: 28px;
+	--r-ctl: 999px;
+	--r-field: 10px;
+	--r-icon: 999px;
+	--r-menu: 14px;
+	--r-item: 14px;
+	--r-gr: 20px;
+	--r-gs: 16px;
+	--shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 1px 3px 1px rgba(0,0,0,.14);
+	--glow: none;
+	--g-hs: 0;
+	--g-sat: 0.55;
+	--g-ld: 4%;
+	color-scheme: dark;
+}
+/* ---- CRT a fosfori verdi (solo scuro, monospazio di sistema) ---- */
+:root[data-theme='crt'].dark {
+	--bg: #010a04;
+	--panel: #03140a;
+	--sidebar: #000502;
+	--elev: #06200f;
+	--border: #0f5a2b;
+	--fg: #3dff7e;
+	--muted: #26c25a;
+	--faint: #157a38;
+	--hover: rgba(61,255,126,0.09);
+	--active: rgba(61,255,126,0.2);
+	--accent: #3dff7e;
+	--accent-fg: #001a08;
+	--p3: #ff6b57;
+	--p2: #e6c53a;
+	--p1: #3ad8d8;
+	--p0: #1f8f46;
+	--shadow: 0 0 0 1px #0f5a2b, 0 0 28px rgba(61,255,126,.22);
+	--radius-sm: 0px;
+	--radius-md: 0px;
+	--radius-lg: 0px;
+	--radius-xl: 0px;
+	--radius-2xl: 0px;
+	--r-ctl: 0px;
+	--r-field: 0px;
+	--r-icon: 0px;
+	--r-menu: 0px;
+	--r-item: 0px;
+	--r-gr: 0px;
+	--r-gs: 0px;
+	--shadow-sm: 0 0 0 1px #0f5a2b;
+	--glow: 0 0 14px -2px rgba(61,255,126,.55);
+	--g-hs: -100;
+	--g-sat: 0.85;
+	--g-ld: -4%;
+	color-scheme: dark;
+}
+/* ---- Nord ---- */
+:root[data-theme='nord'] {
+	--bg: #eceff4;
+	--panel: #f6f8fb;
+	--sidebar: #e5e9f0;
+	--elev: #ffffff;
+	--border: #d8dee9;
+	--fg: #2e3440;
+	--muted: #5b667a;
+	--faint: #9aa5b8;
+	--hover: rgba(46,52,64,0.06);
+	--active: rgba(94,129,172,0.17);
+	--accent: #5e81ac;
+	--accent-fg: #ffffff;
+	--p3: #bf616a;
+	--p2: #b9822f;
+	--p1: #5e81ac;
+	--p0: #9aa5b8;
+	--shadow: 0 10px 28px -8px rgba(46,52,64,.28);
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 10px;
+	--radius-2xl: 12px;
+	--r-ctl: 6px;
+	--r-field: 6px;
+	--r-icon: 6px;
+	--r-menu: 8px;
+	--r-item: 4px;
+	--r-gr: 8px;
+	--r-gs: 6px;
+	--shadow-sm: none;
+	--glow: none;
+	--g-hs: 0;
+	--g-sat: 0.5;
+	--g-ld: 2%;
+	color-scheme: light;
+}
+:root[data-theme='nord'].dark {
+	--bg: #2e3440;
+	--panel: #343b49;
+	--sidebar: #2a303b;
+	--elev: #3b4252;
+	--border: #434c5e;
+	--fg: #eceff4;
+	--muted: #a9b3c6;
+	--faint: #6b7790;
+	--hover: rgba(236,239,244,0.06);
+	--active: rgba(136,192,208,0.18);
+	--accent: #88c0d0;
+	--accent-fg: #2e3440;
+	--p3: #bf616a;
+	--p2: #ebcb8b;
+	--p1: #81a1c1;
+	--p0: #616e88;
+	--shadow: 0 10px 28px -8px rgba(0,0,0,.55);
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 10px;
+	--radius-2xl: 12px;
+	--r-ctl: 6px;
+	--r-field: 6px;
+	--r-icon: 6px;
+	--r-menu: 8px;
+	--r-item: 4px;
+	--r-gr: 8px;
+	--r-gs: 6px;
+	--shadow-sm: none;
+	--glow: none;
+	--g-hs: 0;
+	--g-sat: 0.5;
+	--g-ld: 0%;
+	color-scheme: dark;
+}
+/* ---- Solarized ---- */
+:root[data-theme='solarized'] {
+	--bg: #f6efdb;
+	--panel: #fdf6e3;
+	--sidebar: #eee8d5;
+	--elev: #fffbef;
+	--border: #ddd6c1;
+	--fg: #3d555d;
+	--muted: #657b83;
+	--faint: #93a1a1;
+	--hover: rgba(7,54,66,0.06);
+	--active: rgba(38,139,210,0.16);
+	--accent: #268bd2;
+	--accent-fg: #fdf6e3;
+	--p3: #dc322f;
+	--p2: #b58900;
+	--p1: #268bd2;
+	--p0: #93a1a1;
+	--shadow: 0 0 0 1px #ddd6c1, 0 6px 16px rgba(7,54,66,.14);
+	--radius-sm: 2px;
+	--radius-md: 3px;
+	--radius-lg: 4px;
+	--radius-xl: 6px;
+	--radius-2xl: 8px;
+	--r-ctl: 3px;
+	--r-field: 3px;
+	--r-icon: 3px;
+	--r-menu: 4px;
+	--r-item: 2px;
+	--r-gr: 5px;
+	--r-gs: 4px;
+	--shadow-sm: none;
+	--glow: none;
+	--g-hs: -12;
+	--g-sat: 0.75;
+	--g-ld: 0%;
+	color-scheme: light;
+}
+:root[data-theme='solarized'].dark {
+	--bg: #002b36;
+	--panel: #00313c;
+	--sidebar: #00232c;
+	--elev: #073642;
+	--border: #124753;
+	--fg: #aebdbd;
+	--muted: #839496;
+	--faint: #586e75;
+	--hover: rgba(147,161,161,0.08);
+	--active: rgba(42,161,152,0.2);
+	--accent: #2aa198;
+	--accent-fg: #002b36;
+	--p3: #dc322f;
+	--p2: #b58900;
+	--p1: #268bd2;
+	--p0: #586e75;
+	--shadow: 0 0 0 1px #124753, 0 6px 16px rgba(0,0,0,.4);
+	--radius-sm: 2px;
+	--radius-md: 3px;
+	--radius-lg: 4px;
+	--radius-xl: 6px;
+	--radius-2xl: 8px;
+	--r-ctl: 3px;
+	--r-field: 3px;
+	--r-icon: 3px;
+	--r-menu: 4px;
+	--r-item: 2px;
+	--r-gr: 5px;
+	--r-gs: 4px;
+	--shadow-sm: none;
+	--glow: none;
+	--g-hs: -12;
+	--g-sat: 0.75;
+	--g-ld: 0%;
+	color-scheme: dark;
+}
+/* ---- Dracula / Alucard ---- */
+:root[data-theme='dracula'] {
+	--bg: #f7f3e3;
+	--panel: #fffef7;
+	--sidebar: #f0ebd2;
+	--elev: #ffffff;
+	--border: #e3dcbf;
+	--fg: #1f1f1f;
+	--muted: #5e5a47;
+	--faint: #a39e7e;
+	--hover: rgba(31,31,31,0.06);
+	--active: rgba(100,74,201,0.15);
+	--accent: #644ac9;
+	--accent-fg: #ffffff;
+	--p3: #cb3a2a;
+	--p2: #a34d14;
+	--p1: #036a96;
+	--p0: #a39e7e;
+	--shadow: 0 12px 32px -8px rgba(100,74,201,.3), 0 0 0 1px rgba(100,74,201,.15);
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+	--radius-xl: 14px;
+	--radius-2xl: 18px;
+	--r-ctl: 8px;
+	--r-field: 8px;
+	--r-icon: 8px;
+	--r-menu: 12px;
+	--r-item: 7px;
+	--r-gr: 14px;
+	--r-gs: 11px;
+	--shadow-sm: 0 0 0 1px rgba(189,147,249,.18);
+	--glow: 0 0 16px -2px rgba(189,147,249,.6);
+	--g-hs: 30;
+	--g-sat: 0.7;
+	--g-ld: 0%;
+	color-scheme: light;
+}
+:root[data-theme='dracula'].dark {
+	--bg: #1e1f29;
+	--panel: #282a36;
+	--sidebar: #191a21;
+	--elev: #343746;
+	--border: #44475a;
+	--fg: #f8f8f2;
+	--muted: #a9acc4;
+	--faint: #6272a4;
+	--hover: rgba(248,248,242,0.06);
+	--active: rgba(189,147,249,0.2);
+	--accent: #bd93f9;
+	--accent-fg: #1e1f29;
+	--p3: #ff5555;
+	--p2: #ffb86c;
+	--p1: #8be9fd;
+	--p0: #6272a4;
+	--shadow: 0 14px 40px -8px rgba(0,0,0,.7), 0 0 0 1px rgba(189,147,249,.28);
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+	--radius-xl: 14px;
+	--radius-2xl: 18px;
+	--r-ctl: 8px;
+	--r-field: 8px;
+	--r-icon: 8px;
+	--r-menu: 12px;
+	--r-item: 7px;
+	--r-gr: 14px;
+	--r-gs: 11px;
+	--shadow-sm: 0 0 0 1px rgba(189,147,249,.18);
+	--glow: 0 0 16px -2px rgba(189,147,249,.6);
+	--g-hs: 30;
+	--g-sat: 0.7;
+	--g-ld: 0%;
+	color-scheme: dark;
+}
+/* ---- Gruvbox (ombre dure, retro) ---- */
+:root[data-theme='gruvbox'] {
+	--bg: #fbf1c7;
+	--panel: #f9f5d7;
+	--sidebar: #ebdbb2;
+	--elev: #fbf1c7;
+	--border: #d5c4a1;
+	--fg: #3c3836;
+	--muted: #7c6f64;
+	--faint: #a89984;
+	--hover: rgba(60,56,54,0.07);
+	--active: rgba(214,93,14,0.17);
+	--accent: #d65d0e;
+	--accent-fg: #fbf1c7;
+	--p3: #cc241d;
+	--p2: #b57614;
+	--p1: #458588;
+	--p0: #a89984;
+	--shadow: 5px 5px 0 0 #bdae93;
+	--radius-sm: 1px;
+	--radius-md: 2px;
+	--radius-lg: 3px;
+	--radius-xl: 4px;
+	--radius-2xl: 6px;
+	--r-ctl: 3px;
+	--r-field: 2px;
+	--r-icon: 2px;
+	--r-menu: 3px;
+	--r-item: 2px;
+	--r-gr: 4px;
+	--r-gs: 3px;
+	--shadow-sm: 2px 2px 0 0 rgba(0,0,0,.28);
+	--glow: none;
+	--g-hs: -170;
+	--g-sat: 0.75;
+	--g-ld: -2%;
+	color-scheme: light;
+}
+:root[data-theme='gruvbox'].dark {
+	--bg: #282828;
+	--panel: #32302f;
+	--sidebar: #1d2021;
+	--elev: #3c3836;
+	--border: #504945;
+	--fg: #ebdbb2;
+	--muted: #bdae93;
+	--faint: #7c6f64;
+	--hover: rgba(235,219,178,0.07);
+	--active: rgba(254,128,25,0.2);
+	--accent: #fe8019;
+	--accent-fg: #282828;
+	--p3: #fb4934;
+	--p2: #fabd2f;
+	--p1: #83a598;
+	--p0: #7c6f64;
+	--shadow: 5px 5px 0 0 #000000;
+	--radius-sm: 1px;
+	--radius-md: 2px;
+	--radius-lg: 3px;
+	--radius-xl: 4px;
+	--radius-2xl: 6px;
+	--r-ctl: 3px;
+	--r-field: 2px;
+	--r-icon: 2px;
+	--r-menu: 3px;
+	--r-item: 2px;
+	--r-gr: 4px;
+	--r-gs: 3px;
+	--shadow-sm: 2px 2px 0 0 rgba(0,0,0,.28);
+	--glow: none;
+	--g-hs: -170;
+	--g-sat: 0.75;
+	--g-ld: 0%;
+	color-scheme: dark;
+}
+/* ---- Rosé Pine / Dawn ---- */
+:root[data-theme='rose'] {
+	--bg: #faf4ed;
+	--panel: #fffaf3;
+	--sidebar: #f2e9e1;
+	--elev: #fffaf3;
+	--border: #e6ddd6;
+	--fg: #575279;
+	--muted: #797593;
+	--faint: #aaa5b8;
+	--hover: rgba(87,82,121,0.06);
+	--active: rgba(180,99,122,0.15);
+	--accent: #b4637a;
+	--accent-fg: #fffaf3;
+	--p3: #c43e5f;
+	--p2: #c27a1a;
+	--p1: #286983;
+	--p0: #aaa5b8;
+	--shadow: 0 16px 40px -10px rgba(87,82,121,.28);
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-2xl: 26px;
+	--r-ctl: 12px;
+	--r-field: 12px;
+	--r-icon: 10px;
+	--r-menu: 16px;
+	--r-item: 10px;
+	--r-gr: 18px;
+	--r-gs: 14px;
+	--shadow-sm: 0 2px 10px -2px rgba(25,23,36,.28);
+	--glow: none;
+	--g-hs: 55;
+	--g-sat: 0.65;
+	--g-ld: 0%;
+	color-scheme: light;
+}
+:root[data-theme='rose'].dark {
+	--bg: #191724;
+	--panel: #1f1d2e;
+	--sidebar: #16141f;
+	--elev: #26233a;
+	--border: #312e47;
+	--fg: #e0def4;
+	--muted: #908caa;
+	--faint: #6e6a86;
+	--hover: rgba(224,222,244,0.06);
+	--active: rgba(235,188,186,0.16);
+	--accent: #ebbcba;
+	--accent-fg: #191724;
+	--p3: #eb6f92;
+	--p2: #f6c177;
+	--p1: #9ccfd8;
+	--p0: #6e6a86;
+	--shadow: 0 18px 44px -10px rgba(0,0,0,.65);
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-2xl: 26px;
+	--r-ctl: 12px;
+	--r-field: 12px;
+	--r-icon: 10px;
+	--r-menu: 16px;
+	--r-item: 10px;
+	--r-gr: 18px;
+	--r-gs: 14px;
+	--shadow-sm: 0 2px 10px -2px rgba(25,23,36,.28);
+	--glow: none;
+	--g-hs: 55;
+	--g-sat: 0.65;
+	--g-ld: 0%;
+	color-scheme: dark;
+}
+
+/*
+ * Ponte verso le utility di Tailwind che hanno valori fissi (non passano da variabili): `rounded` senza suffisso,
+ * `shadow`, `shadow-sm` e `shadow-lg`. `rounded-full` resta un cerchio in tutti i temi, tranne CRT (vedi sotto).
+ */
+:root[data-theme] .rounded {
+	border-radius: var(--radius-sm);
+}
+:root[data-theme] .shadow,
+:root[data-theme] .shadow-sm {
+	box-shadow: var(--shadow-sm);
+}
+:root[data-theme] .shadow-lg {
+	box-shadow: var(--shadow);
+}
+
+/* ---- dettagli distintivi ---- */
+
+/* Material: pulsanti a pillola, etichette un po' spaziate */
+:root[data-theme='material'] .btn {
+	font-weight: 500;
+	letter-spacing: 0.01em;
+}
+:root[data-theme='material'] .btn-primary {
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* CRT: monospazio di sistema (famiglia generica, nessun font con nome), bagliore dei fosfori, scanline e vignettatura */
+:root[data-theme='crt'] body {
+	font-family: monospace;
+	font-size: 13px;
+	text-shadow: 0 0 5px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+:root[data-theme='crt'] .rounded-full {
+	border-radius: 0 !important;
+}
+:root[data-theme='crt'] .field:focus,
+:root[data-theme='crt'] :focus-visible {
+	box-shadow: 0 0 10px -1px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+:root[data-theme='crt'] ::selection {
+	background: var(--accent);
+	color: var(--accent-fg);
+	text-shadow: none;
+}
+:root[data-theme='crt'] body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	z-index: 2147483647;
+	pointer-events: none;
+	background:
+		radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%),
+		repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0, rgba(0, 0, 0, 0.22) 1px, transparent 1px, transparent 3px);
+}
+
+/* Dracula: alone luminoso sul campo attivo */
+:root[data-theme='dracula'] .field:focus {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Gruvbox: le superfici sollevate hanno un'ombra dura, da interfaccia retrò */
+:root[data-theme='gruvbox'] .btn:active {
+	transform: translate(1px, 1px);
+}

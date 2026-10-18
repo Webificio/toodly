@@ -257,6 +257,7 @@ In **Settings → Data → Automatic backup** choose how often (daily/weekly), t
 Open **Settings** from the sidebar.
 
 - **Appearance**: *Light*, *Dark* or *System*.
+- **Theme**: the look of the app, independent from the mode above: *Default*, *Material*, *CRT* (green phosphors on black with the system monospace font; it is always dark, so the mode buttons are disabled), *Nord*, *Solarized*, *Dracula*, *Gruvbox* and *Rosé Pine*. Every theme except CRT has a light and a dark variant. The choice is shared by all windows. See [THEMES.md](THEMES.md) for a description of each theme and how to create or customise one.
 - **Language**: Italian or English (shared by all windows; also changes the tray menu).
 - **Number tasks in the list**: shows a progressive number (purple) between the checkbox and the title of each task, counted among the tasks of the same level; groups are not counted and sub-tasks restart from 1.
 - **Launch toodly at system startup**.

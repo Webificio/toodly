@@ -1,9 +1,23 @@
 @import 'tailwindcss';
+@import './themes.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
 	--row-py: 6px;
+	/* forme: i temi (themes.css) le ridefiniscono; qui i valori dello stile predefinito */
+	--r-ctl: 8px;
+	--r-field: 8px;
+	--r-icon: 7px;
+	--r-menu: 10px;
+	--r-item: 6px;
+	--r-gr: 13px;
+	--r-gs: 10px;
+	--glow: none;
+	/* colori dei gruppi della Graph: scarto di tinta, moltiplicatore di saturazione, scarto di luminosità */
+	--g-hs: 0;
+	--g-sat: 1;
+	--g-ld: 0%;
 	--bg: #fbfbfc;
 	--panel: #ffffff;
 	--sidebar: #f3f3f6;
@@ -117,7 +131,7 @@ select {
 	gap: 6px;
 	height: 30px;
 	padding: 0 11px;
-	border-radius: 8px;
+	border-radius: var(--r-ctl);
 	border: 1px solid var(--border);
 	background: var(--elev);
 	color: var(--fg);
@@ -136,6 +150,7 @@ select {
 	background: var(--accent);
 	border-color: transparent;
 	color: var(--accent-fg);
+	box-shadow: var(--glow);
 }
 .btn-primary:hover {
 	background: var(--accent);
@@ -154,7 +169,7 @@ select {
 	place-items: center;
 	width: 28px;
 	height: 28px;
-	border-radius: 7px;
+	border-radius: var(--r-icon);
 	color: var(--muted);
 	transition: background 0.12s, color 0.12s;
 }
@@ -169,7 +184,7 @@ select {
 .field {
 	height: 30px;
 	padding: 0 9px;
-	border-radius: 8px;
+	border-radius: var(--r-field);
 	border: 1px solid var(--border);
 	background: var(--panel);
 	outline: none;
@@ -186,7 +201,7 @@ textarea.field {
 	min-width: 170px;
 	background: var(--elev);
 	border: 1px solid var(--border);
-	border-radius: 10px;
+	border-radius: var(--r-menu);
 	padding: 4px;
 	box-shadow: var(--shadow);
 	z-index: 80;
@@ -197,7 +212,7 @@ textarea.field {
 	align-items: center;
 	gap: 8px;
 	padding: 6px 9px;
-	border-radius: 6px;
+	border-radius: var(--r-item);
 	font-size: 12.5px;
 	cursor: pointer;
 	outline: none;

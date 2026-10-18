@@ -9,8 +9,10 @@
 			(function () {
 				try {
 					var t = localStorage.getItem('toodly.theme') || 'system';
-					var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+					var s = localStorage.getItem('toodly.themestyle') || 'default';
+					var dark = s === 'crt' || t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
 					document.documentElement.classList.toggle('dark', dark);
+					if (s !== 'default') document.documentElement.setAttribute('data-theme', s);
 				} catch (e) {}
 			})();
 		</script>

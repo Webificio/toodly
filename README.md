@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  Toodly is a fast, local-first desktop to-do app, written in Rust, in the spirit of TickTick and Linear.<br>
+  Toodly is a fast, local-first desktop to-do app, written in Rust, cross-platform (Windows, macOS and Linux), in the spirit of TickTick and Linear.<br>
   Lists, Kanban, calendar with time-blocking, sub-tasks, dependencies, multiple windows and independent data sets.
 </p>
 
@@ -52,6 +52,7 @@ You can also build them yourself, see [Building](#building).
 
 - **Tasks** with 4 priorities, hierarchical sub-tasks, **dependencies** ("waiting" until prerequisites are done), due date and start/end time, recurrence, drag & drop reordering.
 - **Views**: List, Kanban (by status or priority), Gantt, Graph (groups and tasks as a tree on a pannable, zoomable canvas), monthly and weekly Calendar with time-blocking, smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
+- **Themes**: Default, Material, CRT (green phosphor), Nord, Solarized, Dracula, Gruvbox and Rosé Pine, each in light and dark (Settings → Appearance). Adding your own takes one CSS block, see [docs/THEMES.md](docs/THEMES.md).
 - **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt and Graph views with Mermaid export, statistics.
 - **Groups and sub-groups** (folders) independent from lists, multi-selection with bulk edits, bulk creation of tasks from pasted text or Markdown.
 - **Rich task details**: Markdown description, multiple notes, file attachments.
@@ -68,6 +69,7 @@ The complete feature reference is in [docs/FEATURES.md](docs/FEATURES.md).
 | Document | Audience | Content |
 |---|---|---|
 | [User guide](docs/USER_GUIDE.md) | Users | How to use toodly: tasks, views, windows, data sets, Quick Add, backup, shortcuts |
+| [Themes](docs/THEMES.md) | Users and developers | The available themes and how to create or customise one |
 | [Features](docs/FEATURES.md) | Users and developers | Detailed reference of every feature and its rules |
 | [Changelog](CHANGELOG.md) | Everyone | What changed in each version (also used as GitHub release notes) |
 | [Developer guide](docs/DEVELOPER.md) | Developers | Architecture, data model, frontend/backend contract, persistence files, conventions |

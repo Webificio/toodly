@@ -79,14 +79,14 @@
 		filter: brightness(1.08);
 	}
 	.gbox-root {
-		border-radius: 13px;
+		border-radius: var(--r-gr);
 		font-size: 16px;
 		font-weight: 500;
 		letter-spacing: 0.04em;
 		background-size: 35px 28px;
 	}
 	.gbox-sub {
-		border-radius: 10px;
+		border-radius: var(--r-gs);
 		font-size: 12.5px;
 		font-weight: 600;
 		letter-spacing: 0.03em;

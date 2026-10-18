@@ -8,6 +8,7 @@ The section of the version being released is used as the text of the GitHub rele
 ## [Unreleased]
 
 ### Added
+- **Themes**: a new *Theme* setting (Settings → Appearance) combines with Light / Dark / System. *Default* is the classic look; *Material* (Material Design 3: tonal surfaces, pill buttons, large radii, elevation), *CRT* (green phosphors on black, system monospace font, glow, scanlines; always dark), and the palette themes *Nord*, *Solarized*, *Dracula*, *Gruvbox* (hard shadows, retro) and *Rosé Pine*, each with a light and a dark variant and its own shapes. The Graph group colours follow the theme. The font never changes (CRT uses the generic system `monospace`). New guide: [docs/THEMES.md](docs/THEMES.md) on creating and customising themes.
 - **Graph view**: *Mermaid* export, like the Gantt. The button in the top-right toolbar saves a Markdown file with a ```` ```mermaid flowchart ```` diagram (groups and sub-groups as subgraphs, sub-task and dependency arrows), and the copy button puts it on the clipboard.
 
 ## [1.2.0] - 2026-10-18

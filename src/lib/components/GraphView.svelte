@@ -507,14 +507,14 @@
 <style>
 	/* Colori dei gruppi: `--gh` (tinta) e `--gl` (scarto di luminosità) arrivano da graph.ts; qui le due tonalità per tema chiaro e scuro. */
 	:global(.gx) {
-		--gfill: hsl(var(--gh) 56% calc(44% + var(--gl)));
-		--gborder: hsl(var(--gh) 60% calc(34% + var(--gl)));
-		--gacc: hsl(var(--gh) 58% calc(50% + var(--gl)));
+		--gfill: hsl(calc(var(--gh) + var(--g-hs)) calc(56% * var(--g-sat)) calc(44% + var(--gl) + var(--g-ld)));
+		--gborder: hsl(calc(var(--gh) + var(--g-hs)) calc(60% * var(--g-sat)) calc(34% + var(--gl) + var(--g-ld)));
+		--gacc: hsl(calc(var(--gh) + var(--g-hs)) calc(58% * var(--g-sat)) calc(50% + var(--gl) + var(--g-ld)));
 	}
 	:global(.dark .gx) {
-		--gfill: hsl(var(--gh) 50% calc(33% + var(--gl)));
-		--gborder: hsl(var(--gh) 72% calc(62% + var(--gl)));
-		--gacc: hsl(var(--gh) 78% calc(70% + var(--gl)));
+		--gfill: hsl(calc(var(--gh) + var(--g-hs)) calc(50% * var(--g-sat)) calc(33% + var(--gl) + var(--g-ld)));
+		--gborder: hsl(calc(var(--gh) + var(--g-hs)) calc(72% * var(--g-sat)) calc(62% + var(--gl) + var(--g-ld)));
+		--gacc: hsl(calc(var(--gh) + var(--g-hs)) calc(78% * var(--g-sat)) calc(70% + var(--gl) + var(--g-ld)));
 	}
 	/* i nodi scivolano al nuovo posto quando il grafo si riorganizza */
 	.gnode {
