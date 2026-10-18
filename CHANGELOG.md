@@ -34,6 +34,7 @@ The section of the version being released is used as the text of the GitHub rele
 ### Fixed
 - Two windows opening the same data set no longer clash while migrating the database.
 - "Days of the week" recurrence with an empty rule no longer behaves as Sunday.
+- Full backups (ZIP export) wrote `format` instead of `formatVersion` in the manifest, so toodly rejected its own exports on import; the manifest now carries `formatVersion` 1.
 
 ## [1.0.1] - 2026-10-12
 

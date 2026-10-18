@@ -86,7 +86,7 @@ async function writeBackup(dest: string): Promise<{ path: string; datasets: numb
 	}
 	const manifest = {
 		app: 'toodly',
-		format: 2,
+		formatVersion: EXPORT_FORMAT_VERSION,
 		exportedAt: nowISO(),
 		workspaces: sets.map((d) => d.id),
 		datasets: sets.map((d) => ({ id: d.id, name: d.name })),
