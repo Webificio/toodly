@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { CalendarDays, Hourglass } from '@lucide/svelte';
+	import { CalendarDays, ChevronLeft, ChevronRight, Hourglass } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import TaskQuickActions from './TaskQuickActions.svelte';
 	import { handleSelectClick, selection } from '../selection.svelte';
 	import { store } from '../store.svelte';
 	import { ui } from '../nav.svelte';
 	import { t } from '../i18n.svelte';
-	import { relativeDay, diffDays, todayISO } from '../dates';
+	import { addDays, relativeDay, diffDays, todayISO } from '../dates';
 	import { isOverdue } from '../views';
 	import { paletteStyle } from '../graph';
 	import type { MapLabel } from '../maps';
@@ -24,8 +24,10 @@
 		color,
 		crumb = '',
 		label = null,
-		cardBelow = false
-	}: { task: Task; x: number; y: number; r: number; color: number; crumb?: string; label?: MapLabel | null; cardBelow?: boolean } = $props();
+		cardBelow = false,
+		fill = null,
+		leaf = null
+	}: { task: Task; x: number; y: number; r: number; color: number; crumb?: string; label?: MapLabel | null; cardBelow?: boolean; fill?: string | null; leaf?: number | null } = $props();
 
 	let menuOpen = $state(false);
 	const pc = $derived(`var(--p${task.priority})`);
@@ -34,6 +36,13 @@
 	const selected = $derived(ui.selectedTaskId === task.id);
 	const multi = $derived(selection.has(task.id));
 	const list = $derived(store.listOf(task.list_id));
+	/** Sposta il task di un giorno (con Maiusc, una settimana): scadenza e inizio insieme, come nel Gantt. */
+	function shift(e: MouseEvent, dir: -1 | 1) {
+		e.stopPropagation();
+		const n = (e.shiftKey ? 7 : 1) * dir;
+		if (!task.due_date) return void store.updateTask(task.id, { due_date: todayISO() });
+		store.updateTask(task.id, { due_date: addDays(task.due_date, n), ...(task.start_date ? { start_date: addDays(task.start_date, n) } : {}) });
+	}
 	const dueCls = $derived(!task.due_date || task.completed ? 'text-muted' : late ? 'text-p3' : diffDays(task.due_date, todayISO()) === 0 ? 'text-accent' : 'text-muted');
 </script>
 
@@ -42,8 +51,9 @@
 	<div
 		data-task
 		data-task-id={task.id}
-		class="mbub size-full cursor-pointer rounded-full {task.completed ? 'mbub-done' : ''} {blocked ? 'mbub-blocked' : ''} {late ? 'mbub-late' : ''} {multi ? 'mbub-multi' : selected ? 'mbub-sel' : ''}"
+		class="mbub size-full cursor-pointer rounded-full {task.completed && !fill ? 'mbub-done' : ''} {blocked ? 'mbub-blocked' : ''} {late ? 'mbub-late' : ''} {multi ? 'mbub-multi' : selected ? 'mbub-sel' : ''}"
 		title={task.title}
+		style={(fill ? `background:${fill};border-color:color-mix(in srgb, ${fill} 55%, #000);` : '') + (leaf !== null ? `border-radius:0 100% 0 100%;rotate:${leaf}deg;` : '')}
 		onclick={(e) => {
 			if (!handleSelectClick(e, task.id)) ui.selectedTaskId = task.id;
 			else ui.selectedTaskId = null;
@@ -72,7 +82,9 @@
 			{#if crumb}<div class="truncate text-[11px] text-muted" style="color:var(--gacc)">{crumb}</div>{/if}
 			<div class="flex min-w-0 items-center gap-2 text-[11px] whitespace-nowrap text-muted">
 				{#if blocked}<span class="inline-flex shrink-0 items-center text-p2" title={t('In attesa di {x}', { x: store.blockers(task.id).map((b) => b.title).join(', ') })}><Hourglass size={11} /></span>{/if}
+				{#if !task.completed}<button class="icon-btn size-5" data-nodrag title={t('Un giorno prima (Maiusc: una settimana)')} aria-label={t('Un giorno prima (Maiusc: una settimana)')} disabled={!task.due_date} onclick={(e) => shift(e, -1)}><ChevronLeft size={13} /></button>{/if}
 				{#if task.due_date}<span class="inline-flex shrink-0 items-center gap-1 {dueCls}"><CalendarDays size={11} />{relativeDay(task.due_date)}{#if task.start_time}&nbsp;{task.start_time}{/if}</span>{:else}<span>{t('Senza data')}</span>{/if}
+				{#if !task.completed}<button class="icon-btn size-5" data-nodrag title={task.due_date ? t('Un giorno dopo (Maiusc: una settimana)') : t('Imposta a oggi')} aria-label={t('Un giorno dopo (Maiusc: una settimana)')} onclick={(e) => shift(e, 1)}><ChevronRight size={13} /></button>{/if}
 				{#if list}<span class="ml-auto inline-flex min-w-0 items-center gap-1"><span class="size-2 shrink-0 rounded-full" style="background:{list.color}"></span><span class="truncate">{list.name}</span></span>{/if}
 			</div>
 			<div class="-mx-0.5"><TaskQuickActions {task} onmenu={(o) => (menuOpen = o)} /></div>

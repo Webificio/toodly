@@ -31,7 +31,7 @@ If you already have several data sets, toodly asks which one to open in each new
 ## 2. The window
 
 - **Sidebar (left)**: smart views (*Today*, *Next 7 days*, *Important*, *All tasks*), your **Lists**, your **Filters**, and the buttons for settings, a new window and bulk import. Drag the thin line between the sidebar and the main area to resize it (double-click to reset). Each window remembers its own sidebar width.
-- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*, *Graph*, *Orbit*, *Metro*), sorting and grouping options, and the calendar navigation.
+- **Header**: the view switcher (*List*, *Kanban*, *Calendar*, *Gantt*, *Graph*, *Orbit*, *Metro*, *Cork*, *Road*, *Matrix*, *Mosaic*, *Ridge*, *Grove*, *Slot*; only the icon is always visible, the name shows for the active view or on hover), sorting and grouping options, and the calendar navigation.
 - **Main area**: your tasks in the selected view.
 - **Detail panel (right)**: opens when you click a task. Click outside it, or press **Esc**, to close it.
 
@@ -131,6 +131,34 @@ A radar of the tasks in the current view. **Today** is the centre (the number is
 A subway map of the tasks in the current view. Each **group** is a line, each task a station; the horizontal axis is time (columns for each due date, *Overdue* on the left and *No date* on the right) with a vertical *Today* marker. Tasks due the same day on the same line fan out above and below it. Dependencies are dashed links between stations — the interchanges between lines — red when late. Hover, click, selection, add bar, pan, zoom and minimap work as in Orbit and Graph.
 
 - **Export to Mermaid** (Orbit and Metro, top right): *Mermaid* saves a Markdown file, the copy button puts the text on the clipboard. Metro becomes a flowchart (one subgraph per line, dependencies dashed); Orbit becomes a mind map (group → time band → tasks).
+
+### Cork
+
+A cork board: every task is a sticky note, grouped under a label per group. **Drag** a note to put it where you like (the position is remembered; with several selected notes they move together). **Rearrange** puts all notes back in their group; **Strings** shows or hides the dependency strings. Hover a note for the checkbox and quick actions.
+
+### Road
+
+A road in perspective: one lane per group, today in the foreground and the future toward the horizon. Use the **wheel** to move along the road, **Horizon** to choose how far you see (1 week – 3 months). Overdue tasks stay in front, tasks without a date or beyond the horizon are listed in *Off the road*. On hover, ◀ ▶ move the due date by a day (`Shift`: a week).
+
+### Matrix
+
+Importance (priority) against urgency (deadline): *Do now* (high priority, due within a week or overdue), *To plan*, *To squeeze in* and *Later*. Tasks keep the group colour; the counters show how many tasks each quadrant holds.
+
+### Mosaic
+
+A grid of tiles: the bigger the tile, the more important and/or closer to its deadline the task is. Choose the criterion (*Priority*, *Deadline*, *Both*) above the grid.
+
+### Ridge
+
+The workload of the next 7, 14 or 28 days as a mountain profile. A day's load is the sum of the **estimated durations** of the tasks due that day (set it in the task details, *Planning › Estimated duration*; default 30 minutes, or the time range when the task has one). The dashed line is your **daily capacity** (default 6 h, change it with − / +): peaks above it turn red. Click a day to list its tasks, move them with ◀ ▶ and change their duration; *Overdue* appears as the first column.
+
+### Grove
+
+One tree per group. Leaves are open tasks (colour = days to the deadline, size = priority), fruits are completed tasks (toggle *Fruits*), and overdue tasks lie on the ground under their tree.
+
+### Slot
+
+The day as a timeline. Tasks with a date and a time are **blocks**: drag to move (15-minute steps), drag the bottom edge to resize, ▲ ▼ move by 30 minutes (`Shift`: 15), ✕ takes the task off the schedule. Dashed green areas are **free slots** inside work hours (08:00–19:00). The *To schedule* tray lists the day's tasks without a time, then overdue and undated ones: **drag** a card into a free slot (its length is the **estimated duration**, editable on the card) or press **→** to put it in the first slot that fits. Use the arrows above to change day; *Planned* and *Free* show the totals.
 
 ### Graph
 

@@ -6,6 +6,13 @@
 	import GraphView from '../lib/components/GraphView.svelte';
 	import OrbitView from '../lib/components/OrbitView.svelte';
 	import MetroView from '../lib/components/MetroView.svelte';
+	import CorkView from '../lib/components/CorkView.svelte';
+	import RoadView from '../lib/components/RoadView.svelte';
+	import MatrixView from '../lib/components/MatrixView.svelte';
+	import MosaicView from '../lib/components/MosaicView.svelte';
+	import RidgeView from '../lib/components/RidgeView.svelte';
+	import GroveView from '../lib/components/GroveView.svelte';
+	import SlotView from '../lib/components/SlotView.svelte';
 	import { nav } from '../lib/nav.svelte';
 </script>
 
@@ -21,6 +28,20 @@
 	<OrbitView />
 {:else if nav.mode === 'metro'}
 	<MetroView />
+{:else if nav.mode === 'cork'}
+	<CorkView />
+{:else if nav.mode === 'road'}
+	<RoadView />
+{:else if nav.mode === 'matrix'}
+	<MatrixView />
+{:else if nav.mode === 'mosaic'}
+	<MosaicView />
+{:else if nav.mode === 'ridge'}
+	<RidgeView />
+{:else if nav.mode === 'grove'}
+	<GroveView />
+{:else if nav.mode === 'slot'}
+	<SlotView />
 {:else}
 	<ListView />
 {/if}

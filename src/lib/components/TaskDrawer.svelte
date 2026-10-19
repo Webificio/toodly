@@ -3,7 +3,7 @@
 	import { Switch } from 'bits-ui';
 	import { uiprefs, toggleSection } from '../uiprefs.svelte';
 	import { ensureNotificationPermission } from '../reminders.svelte';
-	import { Hourglass, Link2, CheckCircle2, Circle, ArrowLeft, FileText, Flag, Paperclip, Plus, Trash2, X, Repeat, Clock, CalendarDays, Layers, FolderOpen, Folder, CalendarPlus, ChartGantt, Bell, ChevronRight, LayoutTemplate, Eye, Hash, Diamond, ALargeSmall, CaseSensitive, CaseUpper, CaseLower } from '@lucide/svelte';
+	import { Timer, Hourglass, Link2, CheckCircle2, Circle, ArrowLeft, FileText, Flag, Paperclip, Plus, Trash2, X, Repeat, Clock, CalendarDays, Layers, FolderOpen, Folder, CalendarPlus, ChartGantt, Bell, ChevronRight, LayoutTemplate, Eye, Hash, Diamond, ALargeSmall, CaseSensitive, CaseUpper, CaseLower } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import AttachmentPreview from './AttachmentPreview.svelte';
 	import Select from './Select.svelte';
@@ -131,6 +131,10 @@
 		titleEl?.focus();
 	}
 
+	const durOptions = $derived([
+		{ value: '', label: tt('30 minuti (predefinita)') },
+		...[5, 10, 15, 20, 45, 60, 90, 120, 180, 240, 360, 480].map((m) => ({ value: String(m), label: m < 60 ? tt('{n} minuti', { n: m }) : m === 60 ? tt('1 ora') : m === 90 ? tt('1 ora e mezza') : tt('{n} ore', { n: m / 60 }) }))
+	]);
 	const remindOptions = $derived([
 		{ value: '', label: tt('Nessuno') },
 		{ value: '0', label: tt("All'ora di inizio") },
@@ -370,6 +374,9 @@
 					<span class="text-faint">→</span>
 					<input type="time" class="field" value={task.end_time ?? ''} disabled={!task.start_time} onchange={(e) => setEnd(e.currentTarget.value)} />
 				</div>
+
+				<span class="flex items-center gap-1.5 text-muted"><Timer size={14} />{tt('Durata stimata')}</span>
+				<Select value={task.duration_min == null ? '' : String(task.duration_min)} options={durOptions} onchange={(v) => store.updateTask(task.id, { duration_min: v === '' ? null : Number(v) })} />
 
 				<span class="flex items-center gap-1.5 text-muted"><Bell size={14} />{tt('Promemoria')}</span>
 				<div class="min-w-0">

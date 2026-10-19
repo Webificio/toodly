@@ -9,11 +9,30 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.2.0-6b3fa0.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.3.0-6b3fa0.svg">
   <img alt="Tauri v2" src="https://img.shields.io/badge/Tauri-v2-24C8DB.svg?logo=tauri&logoColor=white">
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte-5-FF3E00.svg?logo=svelte&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg">
 </p>
+
+## One dataset, fourteen views
+
+A to-do list is about the simplest dataset there is: a few dozen rows with a title, a date, a priority, a group and some dependencies. Toodly treats that as an experiment in **data visualization**: how many genuinely different, genuinely *useful* pictures can you draw from the same small table, and which questions does each one answer best?
+
+| Question | View |
+| --- | --- |
+| What is on my plate, in order? | **List**, **Kanban** |
+| What happens when? | **Calendar**, **Gantt**, **Metro** (one line per group, time flowing right) |
+| How is it all organised? | **Graph** (groups and tasks as a tree) |
+| What is closest to me, right now? | **Orbit** (a radar: today at the centre, one sector per group) |
+| What should I do first? | **Matrix** (importance × deadline), **Mosaic** (tiles sized by urgency) |
+| Am I overloading myself? | **Ridge** (daily workload as a mountain profile against your capacity) |
+| What is coming up the road? | **Road** (perspective toward the horizon, one lane per group) |
+| How are my projects doing? | **Grove** (one tree per group: leaves = open, fruits = done, fallen leaves = overdue) |
+| Where do I put it in my day? | **Slot** (drag tasks into the free gaps of a day) |
+| Can I just arrange them my way? | **Cork** (a draggable cork board of sticky notes) |
+
+All of them are fully interactive rather than static charts: the same add bar, selection (`Ctrl`/`Shift`), keyboard navigation, details panel, hover card with quick actions and *Completed* toggle everywhere; canvas views add pan, zoom and a minimap, and several let you change the data by dragging or with the arrows. The view switcher shows only icons (the name appears for the active view or on hover) so fourteen views stay out of the way. Everything stays local: the views only read and edit your own SQLite data.
 
 ## Screenshots
 
@@ -36,11 +55,31 @@
 </tr>
 <tr>
 <td width="50%"><a href="docs/screenshots/graph-zoom.jpg"><img src="docs/screenshots/graph-zoom.jpg" alt="Graph view — zoom"></a><br><sub><b>Graph view — zoom</b> — Zoomed-in detail of the Graph canvas.</sub></td>
-<td width="50%"><a href="docs/screenshots/settings.jpg"><img src="docs/screenshots/settings.jpg" alt="Settings"></a><br><sub><b>Settings</b> — Appearance, language, reminders, shortcuts and startup options.</sub></td>
+<td width="50%"><a href="docs/screenshots/orbit.jpg"><img src="docs/screenshots/orbit.jpg" alt="Orbit view"></a><br><sub><b>Orbit view</b> — A radar: today at the centre, time rings, one coloured sector per group.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/metro.jpg"><img src="docs/screenshots/metro.jpg" alt="Metro view"></a><br><sub><b>Metro view</b> — A subway map: one line per group, one station per task, time flowing right.</sub></td>
+<td width="50%"><a href="docs/screenshots/cork.jpg"><img src="docs/screenshots/cork.jpg" alt="Cork view"></a><br><sub><b>Cork view</b> — A cork board of sticky notes you can drag anywhere, with strings for dependencies.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/road.jpg"><img src="docs/screenshots/road.jpg" alt="Road view"></a><br><sub><b>Road view</b> — A road in perspective, one lane per group, toward the horizon.</sub></td>
+<td width="50%"><a href="docs/screenshots/matrix.jpg"><img src="docs/screenshots/matrix.jpg" alt="Matrix view"></a><br><sub><b>Matrix view</b> — Importance by deadline in four quadrants.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/mosaic.jpg"><img src="docs/screenshots/mosaic.jpg" alt="Mosaic view"></a><br><sub><b>Mosaic view</b> — Tiles sized by priority and deadline proximity.</sub></td>
+<td width="50%"><a href="docs/screenshots/grove.jpg"><img src="docs/screenshots/grove.jpg" alt="Grove view"></a><br><sub><b>Grove view</b> — One tree per group: leaves are open tasks, fruits are done, fallen leaves are overdue.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/ridge.jpg"><img src="docs/screenshots/ridge.jpg" alt="Ridge view"></a><br><sub><b>Ridge view</b> — Daily workload as a mountain profile against your capacity.</sub></td>
+<td width="50%"><a href="docs/screenshots/slot.jpg"><img src="docs/screenshots/slot.jpg" alt="Slot view"></a><br><sub><b>Slot view</b> — A day timeline with free slots; drag tasks from the tray into the gaps.</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/settings.jpg"><img src="docs/screenshots/settings.jpg" alt="Settings"></a><br><sub><b>Settings</b> — Appearance (light, dark, system), theme, language, density, interface size, reminders, shortcuts and startup options.</sub></td>
+<td width="50%"></td>
 </tr>
 </table>
 
-> **Status:** early release (1.2.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
+> **Status:** early release (1.3.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
 
 ## Download
 
@@ -51,9 +90,9 @@ You can also build them yourself, see [Building](#building).
 ## Highlights
 
 - **Tasks** with 4 priorities, hierarchical sub-tasks, **dependencies** ("waiting" until prerequisites are done), due date and start/end time, recurrence, drag & drop reordering.
-- **Views**: List, Kanban (by status or priority), Gantt, Graph (groups and tasks as a tree on a pannable, zoomable canvas), **Orbit** (a radar: today at the centre, time rings, one sector per group) and **Metro** (a subway map: one line per group, one station per task, time flowing right), monthly and weekly Calendar with time-blocking, smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
+- **Views**: 14 ways to look at the same tasks — List, Kanban (by status or priority), monthly and weekly Calendar with time-blocking, Gantt, Graph, and the experimental data-visualization views described [above](#one-dataset-fourteen-views), plus smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
 - **Themes**: Default, Material, CRT (green phosphor), Nord, Solarized, Dracula, Gruvbox and Rosé Pine, each in light and dark (Settings → Appearance). Adding your own takes one CSS block, see [docs/THEMES.md](docs/THEMES.md).
-- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt, Graph, Orbit and Metro views with Mermaid export, statistics.
+- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt, Graph, Orbit and Metro views with Mermaid export, estimated durations and a daily capacity (Ridge), statistics.
 - **Groups and sub-groups** (folders) independent from lists, multi-selection with bulk edits, bulk creation of tasks from pasted text or Markdown.
 - **Rich task details**: Markdown description, multiple notes, file attachments.
 - **Multi-window**: every window opens its own **data set**; position, size, sidebar width and view of each window are saved and restored on restart (multi-monitor aware).

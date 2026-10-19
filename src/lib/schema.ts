@@ -79,6 +79,10 @@ export async function ensureSchema(db: Database) {
 	// «Mostra nel Gantt»: di default tutti i task sono visibili
 	await addColumn(db, 'tasks', 'in_gantt', 'INTEGER NOT NULL DEFAULT 1');
 	await addColumn(db, 'tasks', 'recur_until', 'TEXT');
+	// posizione sulla bacheca Cork (NULL = posto automatico)
+	await addColumn(db, 'tasks', 'board_x', 'REAL');
+	await addColumn(db, 'tasks', 'board_y', 'REAL');
+	await addColumn(db, 'tasks', 'duration_min', 'INTEGER');
 	await addColumn(db, 'tasks', 'milestone', 'INTEGER NOT NULL DEFAULT 0');
 	await addColumn(db, 'tasks', 'tags', "TEXT NOT NULL DEFAULT ''");
 	// promemoria: minuti prima dell'inizio (NULL = nessun promemoria)

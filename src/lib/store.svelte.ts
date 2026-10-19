@@ -46,7 +46,7 @@ function writePurge(m: Record<string, number>) {
 const FIELD_LABELS: Record<string, string> = {
 	title: 'Titolo', description: 'Descrizione', completed: 'Completamento', priority: 'Priorità', status: 'Stato',
 	due_date: 'Scadenza', start_date: 'Inizio', start_time: 'Orario', end_time: 'Orario', recurrence: 'Ripetizione',
-	list_id: 'Lista', group_id: 'Gruppo', parent_id: 'Posizione', sort: 'Ordine', in_gantt: 'Gantt', remind_min: 'Promemoria', tags: 'Etichette', recur_until: 'Ripetizione', milestone: 'Traguardo'
+	list_id: 'Lista', group_id: 'Gruppo', parent_id: 'Posizione', sort: 'Ordine', in_gantt: 'Gantt', remind_min: 'Promemoria', tags: 'Etichette', recur_until: 'Ripetizione', milestone: 'Traguardo', board_x: 'Posizione', board_y: 'Posizione', duration_min: 'Durata stimata'
 };
 
 type TaskRow = Omit<Task, 'completed' | 'in_gantt' | 'tags' | 'milestone'> & { completed: number; in_gantt: number | null; tags: string | null; milestone: number | null };
@@ -54,7 +54,7 @@ type FilterRow = Omit<Filter, 'rules'> & { rules: string };
 
 const TASK_COLUMNS = [
 	'list_id', 'group_id', 'parent_id', 'title', 'description', 'completed', 'completed_at', 'priority', 'status',
-	'in_gantt', 'milestone', 'tags', 'recur_until', 'remind_min', 'start_date', 'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'updated_at'
+	'in_gantt', 'milestone', 'tags', 'recur_until', 'remind_min', 'start_date', 'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'board_x', 'board_y', 'duration_min', 'updated_at'
 ] as const;
 
 class Store {
@@ -344,6 +344,9 @@ class Store {
 			end_time: input.end_time ?? null,
 			recurrence: input.recurrence ?? 'none',
 			recur_until: input.recur_until ?? null,
+			board_x: input.board_x ?? null,
+			board_y: input.board_y ?? null,
+			duration_min: input.duration_min ?? null,
 			sort: input.sort ?? Date.now(),
 			created_at: now,
 			updated_at: now
@@ -366,10 +369,10 @@ class Store {
 	private insertTask(t: Task) {
 		return exec(
 			`INSERT INTO tasks (id, list_id, group_id, parent_id, title, description, completed, completed_at, priority, status,
-			 in_gantt, milestone, tags, recur_until, remind_min, start_date, due_date, start_time, end_time, recurrence, sort, created_at, updated_at)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
+			 in_gantt, milestone, tags, recur_until, remind_min, start_date, due_date, start_time, end_time, recurrence, sort, board_x, board_y, duration_min, created_at, updated_at)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)`,
 			[t.id, t.list_id, t.group_id, t.parent_id, t.title, t.description, t.completed ? 1 : 0, t.completed_at, t.priority,
-				t.status, t.in_gantt ? 1 : 0, t.milestone ? 1 : 0, joinTags(t.tags), t.recur_until, t.remind_min, t.start_date, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.created_at, t.updated_at]
+				t.status, t.in_gantt ? 1 : 0, t.milestone ? 1 : 0, joinTags(t.tags), t.recur_until, t.remind_min, t.start_date, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.board_x, t.board_y, t.duration_min, t.created_at, t.updated_at]
 		);
 	}
 

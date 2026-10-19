@@ -7,11 +7,23 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
 ### Added
 - **Orbit view**: a radar of your tasks. *Today* sits at the centre, the rings are time bands (overdue, today, within 7 days, within 30 days, later, no date) and each group is a sector in its own colour: the closer to the centre, the more urgent. Dependencies are dashed arcs (red when late).
 - **Metro view**: a subway map. One line per group, one station per task, time flowing left to right with a *today* marker; same-day tasks fan out above and below the line and dependencies are the interchanges between lines.
   Both views share the Graph interactions: same add bar, click to select and open the details panel, `Ctrl`/`Shift` multi-select, `↑`/`↓`, hover card with checkbox and quick actions, drag the background to pan, `Ctrl` + wheel / slider zoom, minimap, remembered position per set and a *Completed* toggle.
 - **Orbit and Metro**: *Mermaid* export and copy buttons in the top-right toolbar, like Gantt and Graph. Metro exports a `flowchart LR` (one `subgraph` per line, stations chained by date, dependencies dashed, `done`/`doing`/`crit`/`late` classes); Orbit exports a `mindmap` (group → time band → tasks, nearest due date first; dependencies are not representable in a mindmap).
+- **New views** (all with the Graph interactions: add bar, click / `Ctrl` / `Shift` selection, `↑`/`↓`, details panel, hover card with checkbox and quick actions, *Completed* toggle):
+  - **Cork**: a cork board of sticky notes grouped by group. Drag the notes anywhere (the position is saved; several selected notes move together), strings for dependencies (red when late), *Rearrange* puts everything back by group.
+  - **Road**: a road in perspective, one lane per group, time running to the horizon (1 week to 3 months). The wheel moves along the road, overdue tasks are in the foreground, tasks without a date or beyond the horizon sit in a side rail. Hover cards have ◀ ▶ to move the due date.
+  - **Matrix**: importance (priority) by urgency (deadline) in four quadrants: *Do now*, *To plan*, *To squeeze in*, *Later*.
+  - **Mosaic**: a tile grid (treemap) sized by priority, deadline proximity or both.
+  - **Ridge**: the workload of the next 7 / 14 / 28 days as a mountain profile against a daily capacity (default 6 h, adjustable); peaks over capacity turn red. Click a day to see its tasks, shift them with ◀ ▶ and change their duration.
+  - **Grove**: one tree per group; leaves are open tasks (colour = deadline proximity, size = priority), fruits are completed tasks and overdue tasks fall to the ground.
+  - **Slot**: the day as a timeline (08:00–19:00 work hours highlighted as free slots). Tasks with a date and time are blocks you can drag (15-minute snap), resize from the bottom edge, nudge with ▲ ▼ or take off the schedule; tasks without a time wait in the *To schedule* tray (of the day, overdue, undated) and are dragged into a free slot or placed in the first one that fits with →, using their estimated duration.
+- **Estimated duration** per task (Planning section of the details; default 30 minutes, or the time range when set), used by Ridge and Slot.
+- **View switcher**: only the icon is always visible; the name shows for the active view or on hover.
 - **Themes**: a new *Theme* setting (Settings → Appearance) combines with Light / Dark / System. *Default* is the classic look; *Material* (Material Design 3: tonal surfaces, pill buttons, large radii, elevation), *CRT* (green phosphors on black, system monospace font, glow, scanlines; always dark), and the palette themes *Nord*, *Solarized*, *Dracula*, *Gruvbox* (hard shadows, retro) and *Rosé Pine*, each with a light and a dark variant and its own shapes. The Graph group colours follow the theme. The font never changes (CRT uses the generic system `monospace`). New guide: [docs/THEMES.md](docs/THEMES.md) on creating and customising themes.
 - **Graph view**: *Mermaid* export, like the Gantt. The button in the top-right toolbar saves a Markdown file with a ```` ```mermaid flowchart ```` diagram (groups and sub-groups as subgraphs, sub-task and dependency arrows), and the copy button puts it on the clipboard.
 
@@ -58,7 +70,8 @@ The section of the version being released is used as the text of the GitHub rele
 ### Added
 - First public version: tasks, sub-tasks, dependencies, lists, groups, filters, List / Kanban / Calendar views, multi-window data sets, tray, Quick Add, backup and restore, Italian and English UI.
 
-[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/atlantidezign/toodly/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/atlantidezign/toodly/compare/v1.0.1...v1.2.0
 [1.0.1]: https://github.com/atlantidezign/toodly/releases/tag/v1.0.1
 [1.0.0]: https://github.com/atlantidezign/toodly/releases/tag/v1.0.0

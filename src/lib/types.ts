@@ -26,6 +26,9 @@ export interface Task {
 	end_time: string | null; // HH:MM
 	recurrence: Recurrence;
 	recur_until: string | null; // ultima data utile della ripetizione
+	board_x: number | null; // posizione sulla bacheca (Cork); null = posto automatico nel suo gruppo
+	board_y: number | null;
+	duration_min: number | null; // durata stimata in minuti (Ridge, Slot); null = predefinita (30 min)
 	sort: number;
 	created_at: string;
 	updated_at: string;
@@ -84,7 +87,7 @@ export interface Filter {
 	created_at: string;
 }
 
-export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt' | 'graph' | 'orbit' | 'metro';
+export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt' | 'graph' | 'orbit' | 'metro' | 'cork' | 'road' | 'matrix' | 'mosaic' | 'ridge' | 'grove';
 export type SortMode = 'manual' | 'priority' | 'due';
 
 export const PRIORITIES: { value: Priority; label: string; cls: string }[] = [

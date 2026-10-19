@@ -149,3 +149,184 @@ describe('Mermaid', () => {
 		expect(metroToMermaid({ ...mi, tasks: [] }, [], 'x')).toBe('');
 	});
 });
+
+import { buildCork, clampPos, corkEdges, noteSize, tilt } from '../src/lib/cork';
+
+describe('Cork', () => {
+	const ci = { groups, tasks, showDone: false, ungroupedLabel: 'Senza gruppo' };
+	it('un gruppetto per gruppo radice, foglietti più grandi per priorità maggiore', () => {
+		const m = buildCork(ci);
+		expect(m.tags.map((g) => g.root)).toEqual(['w', 'p', UNGROUPED]);
+		expect(m.byTask.has('e')).toBe(false);
+		expect(noteSize(mkTask({ priority: 3 })).w).toBeGreaterThan(noteSize(mkTask({ priority: 0 })).w);
+		expect(m.taskOrder.length).toBe(m.notes.length);
+	});
+	it('foglietti automatici non si sovrappongono', () => {
+		const many = Array.from({ length: 30 }, (_, i) => mkTask({ id: 'n' + i, group_id: i % 2 ? 'w' : 'p', priority: (i % 4) as 0 | 1 | 2 | 3 }));
+		const m = buildCork({ ...ci, tasks: many, showDone: true });
+		for (let i = 0; i < m.notes.length; i++)
+			for (let j = i + 1; j < m.notes.length; j++) expect(rectsOverlap(m.notes[i], m.notes[j])).toBe(false);
+	});
+	it('una posizione salvata vince su quella automatica', () => {
+		const t = [mkTask({ id: 'a', group_id: 'w', board_x: 900, board_y: 700 })];
+		const n = buildCork({ ...ci, tasks: t }).byTask.get('a')!;
+		expect([n.x, n.y, n.auto]).toEqual([900, 700, false]);
+		expect(buildCork({ ...ci, tasks: [mkTask({ id: 'b', group_id: 'w' })] }).byTask.get('b')!.auto).toBe(true);
+	});
+	it('la tavola cresce per contenere i foglietti spostati lontano', () => {
+		const m = buildCork({ ...ci, tasks: [mkTask({ id: 'a', group_id: 'w', board_x: 3000, board_y: 2000 })] });
+		expect(m.width).toBeGreaterThan(3000);
+		expect(m.height).toBeGreaterThan(2000);
+	});
+	it('inclinazione stabile e contenuta; clampPos; fili', () => {
+		expect(tilt('abc')).toBe(tilt('abc'));
+		for (const id of ['a', 'zz', 'x12']) expect(Math.abs(tilt(id))).toBeLessThanOrEqual(3);
+		expect(clampPos(-5, 10.6)).toEqual({ x: 0, y: 11 });
+		const m = buildCork(ci);
+		const e = corkEdges(m, [{ task_id: 'b', depends_on_id: 'a', created_at: '' }, { task_id: 'zz', depends_on_id: 'a', created_at: '' }]);
+		expect(e.length).toBe(1);
+		expect(e[0].late).toBe(true);
+	});
+});
+
+import { buildRoad, camFor, persp } from '../src/lib/road';
+describe('road', () => {
+	const g = [] as any[];
+	const base = { groups: g, showDone: false, today: '2026-10-19', cam: 0, horizon: 14, ungroupedLabel: 'x', width: 900, height: 600 };
+	it('scala e ordine', () => {
+		expect(persp(0, 14)).toBe(1);
+		expect(persp(14, 14)).toBeLessThan(persp(7, 14));
+		const m = buildRoad({ ...base, tasks: [mkTask({ id: 'a', due_date: '2026-10-19' }), mkTask({ id: 'b', due_date: '2026-10-26' }), mkTask({ id: 'c' }), mkTask({ id: 'd', due_date: '2027-03-01' })] });
+		expect(m.items.map((i) => i.task.id)).toEqual(['b', 'a']);
+		expect(m.taskOrder).toEqual(['a', 'b', 'c', 'd']);
+		expect(m.rail.map((r) => r.why)).toEqual(['none', 'far']);
+		expect(m.byTask.get('a')!.y).toBeGreaterThan(m.byTask.get('b')!.y);
+	});
+	it('scaduti in primo piano e camFor', () => {
+		const m = buildRoad({ ...base, tasks: [mkTask({ id: 'a', due_date: '2026-10-15' })] });
+		expect(m.items[0].over).toBe(true);
+		expect(m.items[0].s).toBeGreaterThan(1);
+		expect(camFor(30, 0, 14)).toBe(30);
+		expect(camFor(5, 0, 14)).toBe(0);
+		expect(camFor(-3, 0, 14)).toBe(0);
+	});
+	it('sfalsa le schede vicine nella stessa corsia', () => {
+		const m = buildRoad({ ...base, tasks: [mkTask({ id: 'a', due_date: '2026-10-20' }), mkTask({ id: 'b', due_date: '2026-10-20' })] });
+		expect(Math.abs(m.items[0].y - m.items[1].y)).toBeGreaterThan(10);
+	});
+});
+
+import { squarify, weight } from '../src/lib/mosaic';
+describe('mosaic', () => {
+	it('squarify riempie l\'area senza sovrapposizioni', () => {
+		const tiles = squarify([{ id: 'a', v: 5 }, { id: 'b', v: 3 }, { id: 'c', v: 2 }, { id: 'd', v: 1 }], 0, 0, 400, 300);
+		expect(tiles.reduce((s, t) => s + t.w * t.h, 0)).toBeCloseTo(120000, 0);
+		expect(tiles[0].id).toBe('a');
+		for (const t of tiles) expect(t.x + t.w).toBeLessThanOrEqual(400.001);
+	});
+	it('pesi', () => {
+		const today = '2026-10-19';
+		const hi = mkTask({ id: 'h', priority: 3, due_date: '2026-10-20' });
+		const lo = mkTask({ id: 'l', priority: 0, due_date: '2026-12-01' });
+		for (const m of ['priority', 'deadline', 'both'] as const) expect(weight(hi, today, m)).toBeGreaterThan(weight(lo, today, m));
+		expect(weight(mkTask({ id: 'o', due_date: '2026-10-10' }), today, 'deadline')).toBeGreaterThan(weight(mkTask({ id: 'x', due_date: '2026-10-19' }), today, 'deadline'));
+	});
+});
+
+import { buildRidge, durationOf, fmtDur, ridgePoints } from '../src/lib/ridge';
+describe('ridge', () => {
+	it('durata e formato', () => {
+		expect(durationOf(mkTask({ id: 'a' }))).toBe(30);
+		expect(durationOf(mkTask({ id: 'a', duration_min: 90 }))).toBe(90);
+		expect(durationOf(mkTask({ id: 'a', start_time: '09:00', end_time: '10:15' }))).toBe(75);
+		expect(fmtDur(90)).toBe('1h 30m');
+		expect(fmtDur(120)).toBe('2h');
+		expect(fmtDur(45)).toBe('45m');
+	});
+	it('carico per giorno, scaduti e senza data', () => {
+		const m = buildRidge({
+			tasks: [
+				mkTask({ id: 'a', due_date: '2026-10-20', duration_min: 240 }),
+				mkTask({ id: 'b', due_date: '2026-10-20', duration_min: 180 }),
+				mkTask({ id: 'c', due_date: '2026-10-21' }),
+				mkTask({ id: 'd', due_date: '2026-10-10' }),
+				mkTask({ id: 'e' }),
+				mkTask({ id: 'f', due_date: '2026-10-20', completed: true })
+			],
+			today: '2026-10-19', offset: 0, span: 7, capMin: 360, showDone: false
+		});
+		expect(m.days[0].key).toBe('late');
+		const d20 = m.days.find((d) => d.key === '2026-10-20')!;
+		expect(d20.minutes).toBe(420);
+		expect(d20.over).toBe(true);
+		expect(m.days.find((d) => d.key === '2026-10-21')!.minutes).toBe(30);
+		expect(m.undated).toBe(1);
+		expect(m.peak).toBe(420);
+		expect(ridgePoints([60, 120], 0, 100, 500, 40)[0]).toEqual([0, 500]);
+	});
+});
+
+import { buildGrove, leafColor } from '../src/lib/grove';
+describe('grove', () => {
+	it('colori per scadenza', () => {
+		expect(leafColor(-1)).toBe('#c2410c');
+		expect(leafColor(1)).toBe('#f59e0b');
+		expect(leafColor(30)).toBe('#16a34a');
+		expect(leafColor(null)).toBe('#7d8f78');
+	});
+	it('foglie, frutti e foglie cadute', () => {
+		const m = buildGrove({
+			groups: [], today: '2026-10-19', showDone: true, ungroupedLabel: 'x',
+			tasks: [mkTask({ id: 'a', due_date: '2026-10-25' }), mkTask({ id: 'b', due_date: '2026-10-01' }), mkTask({ id: 'c', completed: true })]
+		});
+		expect(m.byTask.get('a')!.kind).toBe('leaf');
+		expect(m.byTask.get('b')!.kind).toBe('fallen');
+		expect(m.byTask.get('b')!.y).toBeGreaterThan(m.ground);
+		expect(m.byTask.get('c')!.kind).toBe('fruit');
+		expect(m.trees).toHaveLength(1);
+		expect(m.trees[0].done).toBe(1);
+	});
+});
+
+import { blockRange, buildSlotDay, firstFit, freeSlots, layoutColumns, placePatch, snap } from '../src/lib/slot';
+describe('slot', () => {
+	it('intervalli e durata', () => {
+		expect(blockRange(mkTask({ id: 'a' }))).toBeNull();
+		expect(blockRange(mkTask({ id: 'a', start_time: '10:00', end_time: '11:30' }))).toEqual({ start: 600, end: 690 });
+		expect(blockRange(mkTask({ id: 'a', start_time: '10:00', duration_min: 45 }))).toEqual({ start: 600, end: 645 });
+		expect(blockRange(mkTask({ id: 'a', start_time: '10:00' }))).toEqual({ start: 600, end: 630 });
+		expect(snap(607)).toBe(600);
+		expect(snap(608)).toBe(615);
+	});
+	it('colonne per blocchi sovrapposti', () => {
+		const l = layoutColumns([{ start: 600, end: 660 }, { start: 630, end: 700 }, { start: 720, end: 780 }]);
+		expect(l[0]).toEqual({ col: 0, cols: 2 });
+		expect(l[1]).toEqual({ col: 1, cols: 2 });
+		expect(l[2]).toEqual({ col: 0, cols: 1 });
+	});
+	it('spazi liberi e primo che entra', () => {
+		const f = freeSlots([{ start: 9 * 60, end: 10 * 60 }, { start: 14 * 60, end: 15 * 60 }]);
+		expect(f).toEqual([{ start: 480, end: 540 }, { start: 600, end: 840 }, { start: 900, end: 1140 }]);
+		expect(firstFit(f, 90)).toBe(600);
+		expect(firstFit(f, 45)).toBe(480);
+		expect(firstFit(f, 300)).toBeNull();
+	});
+	it('giornata: blocchi, vassoio, pianificato', () => {
+		const d = buildSlotDay(
+			[
+				mkTask({ id: 'a', due_date: '2026-10-19', start_time: '09:00', end_time: '10:00' }),
+				mkTask({ id: 'b', due_date: '2026-10-19' }),
+				mkTask({ id: 'c', due_date: '2026-10-10' }),
+				mkTask({ id: 'd' }),
+				mkTask({ id: 'e', due_date: '2026-10-20', start_time: '09:00' })
+			],
+			'2026-10-19', '2026-10-19', true
+		);
+		expect(d.blocks.map((b) => b.task.id)).toEqual(['a']);
+		expect(d.tray.due.map((t) => t.id)).toEqual(['b']);
+		expect(d.tray.late.map((t) => t.id)).toEqual(['c']);
+		expect(d.tray.none.map((t) => t.id)).toEqual(['d']);
+		expect(d.planned).toBe(60);
+		expect(placePatch(mkTask({ id: 'x' }), '2026-10-19', 600, 90)).toEqual({ due_date: '2026-10-19', start_time: '10:00', end_time: '11:30' });
+	});
+});

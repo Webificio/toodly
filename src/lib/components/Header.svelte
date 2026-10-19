@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, Orbit, TrainFront, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
+	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, Orbit, TrainFront, StickyNote, Route, Grid2x2, LayoutDashboard, Mountain, TreeDeciduous, CalendarClock, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { nav, go, ui } from '../nav.svelte';
@@ -14,7 +14,14 @@
 		{ id: 'gantt', label: 'Gantt', icon: ChartGantt },
 		{ id: 'graph', label: 'Graph', icon: Network },
 		{ id: 'orbit', label: 'Orbit', icon: Orbit },
-		{ id: 'metro', label: 'Metro', icon: TrainFront }
+		{ id: 'metro', label: 'Metro', icon: TrainFront },
+		{ id: 'cork', label: 'Cork', icon: StickyNote },
+		{ id: 'road', label: 'Road', icon: Route },
+		{ id: 'matrix', label: 'Matrix', icon: Grid2x2 },
+		{ id: 'mosaic', label: 'Mosaic', icon: LayoutDashboard },
+		{ id: 'ridge', label: 'Ridge', icon: Mountain },
+		{ id: 'grove', label: 'Grove', icon: TreeDeciduous },
+		{ id: 'slot', label: 'Slot', icon: CalendarClock }
 	] as const;
 	const sorts = [
 		{ id: 'manual', label: 'Manuale (trascina)', short: 'Manuale' },
@@ -57,10 +64,13 @@
 	<div class="relative ml-3 flex rounded-lg bg-hover p-0.5">
 		{#each modes as m (m.id)}
 			<button
-				class="relative z-10 flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium transition-all duration-150 {nav.mode === m.id ? 'bg-panel text-fg shadow-sm' : 'text-muted hover:text-fg'}"
+				class="vmode relative z-10 flex h-7 items-center rounded-md px-2 text-[12.5px] font-medium transition-colors duration-150 {nav.mode === m.id ? 'vmode-on bg-panel text-fg shadow-sm' : 'text-muted hover:text-fg'}"
+				title={t(m.label)}
+				aria-label={t(m.label)}
+				aria-pressed={nav.mode === m.id}
 				onclick={() => go({ mode: m.id })}
 			>
-				<m.icon size={14} />{t(m.label)}
+				<m.icon size={15} /><span class="vlab"><span>{t(m.label)}</span></span>
 			</button>
 		{/each}
 	</div>
@@ -115,3 +125,11 @@
 		</div>
 	</div>
 </header>
+
+<style>
+	.vlab { display: grid; grid-template-columns: 0fr; opacity: 0; transition: grid-template-columns 0.18s ease, opacity 0.15s ease; }
+	.vlab > span { min-width: 0; overflow: hidden; white-space: nowrap; }
+	.vmode:hover .vlab, .vmode:focus-visible .vlab, .vmode-on .vlab { grid-template-columns: 1fr; opacity: 1; }
+	.vmode:hover .vlab > span, .vmode:focus-visible .vlab > span, .vmode-on .vlab > span { padding-left: 6px; padding-right: 2px; }
+	@media (prefers-reduced-motion: reduce) { .vlab { transition: none; } }
+</style>
