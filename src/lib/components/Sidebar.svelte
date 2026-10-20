@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Sun, CalendarRange, Flag, Layers, Plus, Settings, AppWindow, Filter as FilterIcon, FilterX, FileDown, Pencil, ListPlus, ChartColumn, Hash } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, sumOf } from '../economy.svelte';
 	import { store } from '../store.svelte';
 	import { nav, go, ui, showToast } from '../nav.svelte';
 	import { exportListMd } from '../exportmd';
@@ -24,6 +26,13 @@
 		for (const [g, n] of store.tagList) c['tag:' + g] = n;
 		for (const f of store.filters) c['filter:' + f.id] = open.filter((t) => inScope(t, 'filter:' + f.id, store.filters, store.blockedIds)).length;
 		return c;
+	});
+	/** margine per lista (solo con Economia attiva e la barra laterale abilitata) */
+	const listMoney = $derived.by(() => {
+		const out: Record<string, ReturnType<typeof sumOf>> = {};
+		if (!ecoShow('sidebar')) return out;
+		for (const l of store.lists) out['list:' + l.id] = sumOf(store.tasks.filter((x) => x.list_id === l.id));
+		return out;
 	});
 	async function exportList(id: string) {
 		try {
@@ -60,6 +69,7 @@
 		{#if edit}
 			<button class="icon-btn mr-0.5 size-6 opacity-0 group-hover:opacity-100" aria-label={t('Modifica')} onclick={edit}><Pencil size={12} /></button>
 		{/if}
+		{#if listMoney[id]}<MoneyChip money={listMoney[id]} class="mr-1.5" />{/if}
 		<span class="mr-2.5 text-[11.5px] text-muted tabular-nums">{counts[id] || ''}</span>
 	</div>
 {/snippet}

@@ -7,6 +7,14 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-10-20
+
+### Added
+- **Economy** (Settings → Economy, off by default): estimated money data per task. *Hourly rate*, *expenses* and *revenue* (both net of VAT) and a VAT rate on the revenue; **labour cost** = estimated duration × rate (only when a duration is set); gross revenue, VAT and **margin** are calculated. Each list has its own *currency*, default hourly rate and default VAT rate (22%). Amounts are stored in cents, formatted with the language's number format, and copied to recurring occurrences and templates; the multi-selection bar has an *Economy* button (only filled fields are applied, *Clear* empties them).
+- **Group totals**: group rows in the List show the margin of everything inside (sub-groups and sub-tasks included), green or red, with the breakdown in the tooltip; lists with different currencies are never added together.
+- **Amounts in the other views** (Settings → Economy → *Where to show amounts*, one switch per view): task chips (margin, or cost when there is no revenue) in List, Kanban, Gantt, Graph, Cork, Road, Mosaic and Slot and in the hover cards of Orbit, Metro, Matrix and Grove; group totals in Gantt, Graph, Orbit, Metro and Road; column totals in Kanban; day totals in the Calendar week view, Ridge and the *Today* / *Next 7 days* sections; net revenue per quadrant in Matrix; a new **Amount** size criterion in Mosaic; margin per list in the sidebar; an *Estimated economy* table in Statistics.
+- **Budget view**: revenue, costs and margin by group and by month/week (with *Out of range*, *No date* and *Total* columns), period totals, a bar chart, a Margin/Revenue/Costs switch, a currency switch and **CSV export**. Amounts count on the task's due date.
+
 ### Changed
 - **Estimated duration** is now a free field instead of a drop-down: type the **hours** (half an hour is `.5`, so `0.5`, `1.5`, `8`, `12`; dot or comma), arrows `↑`/`↓` change it by half an hour, empty means the default (30 minutes, or the time range when set). Values are rounded to the nearest half hour (minimum 0.5 h). Next to the field a localized reading shows what you typed in months, weeks, days, hours and minutes (e.g. `12` → *1 day and 4 h*), counting 1 day = 8 h, 1 week = 5 days, 1 month = 20 days. The same field replaces the drop-downs in the Slot tray and the Ridge day list. The same field is also in the multi-selection bar (*Duration*, with a *Default* button to reset) and templates now remember the estimated duration of the task and its sub-tasks (older templates keep the default). Stored values (minutes) are unchanged, no migration.
 
@@ -73,7 +81,8 @@ The section of the version being released is used as the text of the GitHub rele
 ### Added
 - First public version: tasks, sub-tasks, dependencies, lists, groups, filters, List / Kanban / Calendar views, multi-window data sets, tray, Quick Add, backup and restore, Italian and English UI.
 
-[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/atlantidezign/toodly/compare/v1.3.5...HEAD
+[1.3.5]: https://github.com/atlantidezign/toodly/compare/v1.3.0...v1.3.5
 [1.3.0]: https://github.com/atlantidezign/toodly/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/atlantidezign/toodly/compare/v1.0.1...v1.2.0
 [1.0.1]: https://github.com/atlantidezign/toodly/releases/tag/v1.0.1

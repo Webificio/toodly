@@ -83,6 +83,14 @@ export async function ensureSchema(db: Database) {
 	await addColumn(db, 'tasks', 'board_x', 'REAL');
 	await addColumn(db, 'tasks', 'board_y', 'REAL');
 	await addColumn(db, 'tasks', 'duration_min', 'INTEGER');
+	// economia (importi in centesimi): costo uomo = durata × tariffa; spese e ricavo al netto di IVA
+	await addColumn(db, 'tasks', 'rate_cents', 'INTEGER');
+	await addColumn(db, 'tasks', 'expense_cents', 'INTEGER');
+	await addColumn(db, 'tasks', 'revenue_cents', 'INTEGER');
+	await addColumn(db, 'tasks', 'vat_rate', 'REAL');
+	await addColumn(db, 'lists', 'currency', "TEXT NOT NULL DEFAULT 'EUR'");
+	await addColumn(db, 'lists', 'rate_cents', 'INTEGER');
+	await addColumn(db, 'lists', 'vat_rate', 'REAL NOT NULL DEFAULT 22');
 	await addColumn(db, 'tasks', 'milestone', 'INTEGER NOT NULL DEFAULT 0');
 	await addColumn(db, 'tasks', 'tags', "TEXT NOT NULL DEFAULT ''");
 	// promemoria: minuti prima dell'inizio (NULL = nessun promemoria)

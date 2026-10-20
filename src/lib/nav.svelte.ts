@@ -3,6 +3,7 @@ import { page } from '$app/state';
 import type { Mode, SortMode } from './types';
 import type { Backup } from './backup';
 import { todayISO } from './dates';
+import { uiprefs } from './uiprefs.svelte';
 
 /** Stato di navigazione della finestra, interamente codificato nella query string
  *  (così il backend può salvarlo e ricrearlo al riavvio). */
@@ -12,7 +13,7 @@ export const nav = {
 	},
 	get mode(): Mode {
 		const m = page.url.searchParams.get('mode');
-		return m === 'kanban' || m === 'calendar' || m === 'gantt' || m === 'graph' || m === 'orbit' || m === 'metro' || m === 'cork' || m === 'road' || m === 'matrix' || m === 'mosaic' || m === 'ridge' || m === 'grove' || m === 'slot' ? m : 'list';
+		return m === 'kanban' || m === 'calendar' || m === 'gantt' || m === 'graph' || m === 'orbit' || m === 'metro' || m === 'cork' || m === 'road' || m === 'matrix' || m === 'mosaic' || m === 'ridge' || m === 'grove' || m === 'slot' ? m : m === 'budget' && uiprefs.showEconomy ? m : 'list';
 	},
 	get sort(): SortMode {
 		const s = page.url.searchParams.get('sort');

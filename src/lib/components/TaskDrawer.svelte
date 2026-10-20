@@ -12,7 +12,11 @@
 	import { store } from '../store.svelte';
 	import { normTag } from '../tags';
 	import { saveTemplateFrom } from '../templates.svelte';
-	import { t as tt, i18n } from '../i18n.svelte';
+	import { t as tt, i18n, locale } from '../i18n.svelte';
+	import { Wallet } from '@lucide/svelte';
+	import MoneyField from './MoneyField.svelte';
+	import { DEFAULT_VAT, VAT_RATES, currencyOf, figuresOf, formatAmount, formatMoney, rateOf, summarize, totalsOf } from '../money';
+	import { formatHours } from '../duration';
 	import DurationField from './DurationField.svelte';
 	import { durationOf } from '../ridge';
 	import { ui, showToast } from '../nav.svelte';
@@ -51,6 +55,22 @@
 	]);
 
 	const closed = (k: string) => uiprefs.closedSections.includes(k);
+
+	// ---- economia ----
+	const taskList = $derived(task ? store.listOf(task.list_id) : undefined);
+	const cur = $derived(currencyOf(taskList));
+	const fig = $derived(task ? figuresOf(task, taskList) : null);
+	const dec = $derived<',' | '.'>(locale().startsWith('en') ? '.' : ',');
+	const fm = (c: number) => formatMoney(c, cur, locale());
+	const withSubs = $derived.by(() => {
+		if (!task) return null;
+		const d = store.descendants(task.id);
+		return d.length ? summarize(totalsOf([task, ...d], (id) => store.listOf(id)), tt, locale()) : null;
+	});
+	const vatOptions = $derived([
+		{ value: '', label: tt('Come la lista ({n}%)', { n: taskList?.vat_rate ?? DEFAULT_VAT }) },
+		...VAT_RATES.map((r) => ({ value: String(r), label: r + '%' }))
+	]);
 
 	const recurOptions = $derived([
 		...RECURRENCES.filter((r) => r.value !== 'yearly' && r.value !== 'weekdays' && r.value !== 'monthend'),
@@ -423,6 +443,42 @@
 				</div>
 				{/if}
 			</section>
+
+			<!-- economia -->
+			{#if uiprefs.showEconomy && fig}
+			<section>
+				{@render head('econ', tt('Economia'), fig.cost || fig.net ? fm(fig.margin) : '')}
+				{#if !closed('econ')}
+				<div class="mt-2 grid grid-cols-[110px_1fr] items-center gap-x-3 gap-y-2.5 text-[12.5px]">
+					<span class="flex items-center gap-1.5 text-muted"><Wallet size={14} />{tt('Tariffa oraria')}</span>
+					<MoneyField value={task.rate_cents} currency={cur} placeholder={taskList?.rate_cents != null ? formatAmount(taskList.rate_cents, dec) : ''} label={tt('Tariffa oraria')} onchange={(v) => store.updateTask(task.id, { rate_cents: v })} />
+
+					<span class="text-muted">{tt('Costo uomo')}</span>
+					<span class="min-w-0 truncate">
+						{#if task.duration_min == null}<span class="text-faint">{tt('Imposta la durata stimata')}</span>
+						{:else}<span class="font-medium">{fm(fig.labor)}</span> <span class="text-faint">· {tt('{h} h × {r}/h', { h: formatHours(task.duration_min, dec), r: fm(rateOf(task, taskList)) })}</span>{/if}
+					</span>
+
+					<span class="text-muted">{tt('Spese (netto IVA)')}</span>
+					<MoneyField value={task.expense_cents} currency={cur} label={tt('Spese (netto IVA)')} onchange={(v) => store.updateTask(task.id, { expense_cents: v })} />
+
+					<span class="text-muted">{tt('Ricavo (netto)')}</span>
+					<MoneyField value={task.revenue_cents} currency={cur} label={tt('Ricavo (netto)')} onchange={(v) => store.updateTask(task.id, { revenue_cents: v })} />
+
+					<span class="text-muted">{tt('IVA sul ricavo')}</span>
+					<Select value={task.vat_rate == null ? '' : String(task.vat_rate)} options={vatOptions} onchange={(v) => store.updateTask(task.id, { vat_rate: v === '' ? null : Number(v) })} />
+
+					{#if fig.net}
+						<span class="text-muted">{tt('Ricavo lordo')}</span>
+						<span><span class="font-medium">{fm(fig.gross)}</span> <span class="text-faint">· {tt('IVA {x}', { x: fm(fig.vat) })}</span></span>
+					{/if}
+					<span class="text-muted">{tt('Margine')}</span>
+					<span class="font-semibold" style="color:{fig.net === 0 ? 'inherit' : fig.margin < 0 ? 'var(--p3)' : 'var(--ok, #22a06b)'}">{fm(fig.margin)}</span>
+				</div>
+				{#if withSubs}<p class="mt-2 text-[11.5px] text-muted" title={withSubs.tip}>{tt('Con le sotto-attività')}: <span class="font-medium">{withSubs.text}</span></p>{/if}
+				{/if}
+			</section>
+			{/if}
 
 			<!-- descrizione -->
 			<section>

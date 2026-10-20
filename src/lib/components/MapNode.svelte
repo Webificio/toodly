@@ -9,6 +9,8 @@
 	import { addDays, relativeDay, diffDays, todayISO } from '../dates';
 	import { isOverdue } from '../views';
 	import { paletteStyle } from '../graph';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import type { MapLabel } from '../maps';
 	import type { Task } from '../types';
 
@@ -87,6 +89,7 @@
 				{#if !task.completed}<button class="icon-btn size-5" data-nodrag title={task.due_date ? t('Un giorno dopo (Maiusc: una settimana)') : t('Imposta a oggi')} aria-label={t('Un giorno dopo (Maiusc: una settimana)')} onclick={(e) => shift(e, 1)}><ChevronRight size={13} /></button>{/if}
 				{#if list}<span class="ml-auto inline-flex min-w-0 items-center gap-1"><span class="size-2 shrink-0 rounded-full" style="background:{list.color}"></span><span class="truncate">{list.name}</span></span>{/if}
 			</div>
+			{#if ecoShow()}{@const chip = chipOf(task)}{#if chip}<div class="flex items-center gap-1.5 text-[11px] text-muted">{t('Economia')}<MoneyChip money={chip} /></div>{/if}{/if}
 			<div class="-mx-0.5"><TaskQuickActions {task} onmenu={(o) => (menuOpen = o)} /></div>
 		</div>
 	</div>

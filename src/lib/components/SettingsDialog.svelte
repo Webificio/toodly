@@ -10,8 +10,10 @@
 	import { quitApp } from '../windowing';
 	import { t as tt, i18n, setLang, type Lang } from '../i18n.svelte';
 	import Select from './Select.svelte';
-	import { uiprefs, setDensity, setTextScale, setShowNumbers, setRemindersEnabled, setAllDayTime } from '../uiprefs.svelte';
+	import { ECONOMY_VIEWS } from '../economy.svelte';
+	import { uiprefs, setDensity, setTextScale, setShowNumbers, setShowEconomy, setEconomyIn, setRemindersEnabled, setAllDayTime } from '../uiprefs.svelte';
 	import { testNotification } from '../reminders.svelte';
+	const ECONOMY_LABELS: Record<string, string> = { list: 'Lista', kanban: 'Kanban', calendar: 'Calendario', gantt: 'Gantt', graph: 'Graph', orbit: 'Orbit', metro: 'Metro', cork: 'Cork', road: 'Road', matrix: 'Matrix', mosaic: 'Mosaic', ridge: 'Ridge', grove: 'Grove', slot: 'Slot', stats: 'Statistiche', sidebar: 'Barra laterale' };
 
 	const densityOptions = $derived([
 		{ value: 'compact', label: tt('Compatta') },
@@ -150,6 +152,35 @@
 				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
 			</Switch.Root>
 		</section>
+
+		<section class="flex items-center gap-3">
+			<div class="flex-1">
+				<div class="font-medium">{tt('Economia')}</div>
+				<div class="text-[12px] text-muted">{tt('Costo uomo, spese e ricavi stimati (IVA compresa) per task, totali sui gruppi e la vista Budget.')}</div>
+			</div>
+			<Switch.Root
+				checked={uiprefs.showEconomy}
+				onCheckedChange={setShowEconomy}
+				class="relative h-6 w-10 shrink-0 rounded-full bg-hover transition-colors data-[state=checked]:bg-accent"
+			>
+				<Switch.Thumb class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[18px]" />
+			</Switch.Root>
+		</section>
+
+		{#if uiprefs.showEconomy}
+			<section>
+				<div class="font-medium">{tt('Dove mostrare gli importi')}</div>
+				<div class="mb-2 text-[12px] text-muted">{tt('La vista Budget è sempre disponibile. Qui scegli le altre viste in cui compaiono chip, totali e margini.')}</div>
+				<div class="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+					{#each ECONOMY_VIEWS as v (v)}
+						<label class="flex cursor-pointer items-center gap-2 text-[12.5px]">
+							<input type="checkbox" class="size-3.5 accent-[var(--accent)]" checked={!uiprefs.economyOff.includes(v)} onchange={(e) => setEconomyIn(v, e.currentTarget.checked)} />
+							{tt(ECONOMY_LABELS[v])}
+						</label>
+					{/each}
+				</div>
+			</section>
+		{/if}
 
 		<section class="flex items-center gap-3">
 			<div class="flex-1">

@@ -6,6 +6,8 @@
 	import { expandGroup } from '../groupui.svelte';
 	import { t } from '../i18n.svelte';
 	import type { GNode } from '../graph';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, groupMoney } from '../economy.svelte';
 
 	/** Nodo di un gruppo (o di un sottogruppo, o dei task «Senza gruppo») nella vista Graph. */
 	let { node, ontoggle, onaddtask }: { node: GNode; ontoggle: () => void; onaddtask: () => void } = $props();
@@ -41,6 +43,7 @@
 			{#if count.high > 0}<span class="rounded-full px-1.5" style="background:var(--p3)">{count.high}</span>{/if}
 			{#if count.medium > 0}<span class="rounded-full px-1.5" style="background:var(--p2)">{count.medium}</span>{/if}
 		</span>
+		{#if ecoShow('graph')}<MoneyChip money={groupMoney(real ? node.id : null)} class="bg-black/30 !text-white" />{/if}
 	</div>
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<span

@@ -6,6 +6,8 @@
 <script lang="ts">
 	import { Eye, EyeOff, LocateFixed } from '@lucide/svelte';
 	import MapBar from './MapBar.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, rootMoney } from '../economy.svelte';
 	import RoadCard from './RoadCard.svelte';
 	import Checkbox from './Checkbox.svelte';
 	import { buildRoad, camFor, CARD_H, HORIZONS } from '../road';
@@ -117,7 +119,7 @@
 			</svg>
 			<div class="absolute top-2 left-3 z-20 flex max-w-[60%] flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-muted">
 				{#each model.lanes as l (l.root)}
-					<span class="gx inline-flex items-center gap-1" style={paletteStyle(l.color)}><span class="size-2.5 rounded-[3px]" style="background:var(--gacc)"></span>{l.name}</span>
+					<span class="gx inline-flex items-center gap-1" style={paletteStyle(l.color)}><span class="size-2.5 rounded-[3px]" style="background:var(--gacc)"></span>{l.name}{#if ecoShow('road')}<MoneyChip money={rootMoney(l.root)} />{/if}</span>
 				{/each}
 			</div>
 			{#each model.items as it (it.task.id)}

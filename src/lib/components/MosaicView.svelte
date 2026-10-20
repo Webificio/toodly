@@ -3,7 +3,10 @@
 	import MapBar from './MapBar.svelte';
 	import Checkbox from './Checkbox.svelte';
 	import TaskQuickActions from './TaskQuickActions.svelte';
-	import { MOSAIC_MODES, buildMosaic, type MosaicBy } from '../mosaic';
+	import { MOSAIC_MODES, MOSAIC_MODES_ECONOMY, buildMosaic, type MosaicBy } from '../mosaic';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
+	import { figuresOf } from '../money';
 	import { groupInfo } from '../maps';
 	import { paletteStyle } from '../graph';
 	import { t } from '../i18n.svelte';
@@ -16,7 +19,10 @@
 	/** Mosaic: griglia a tessere; più grande = più importante e/o più vicino alla scadenza. */
 	const matched = $derived(store.tasks.filter((x) => inScope(x, nav.scope, store.filters, store.blockedIds)));
 	const sorted = $derived(sortTasks(matched, 'manual'));
+	const modes = $derived(ecoShow('mosaic') ? MOSAIC_MODES_ECONOMY : MOSAIC_MODES);
 	let by = $state<MosaicBy>(readBy());
+	/** senza Economia (o con la vista disattivata) la dimensione «per importo» ricade su «entrambe» */
+	const eff = $derived<MosaicBy>(modes.includes(by) ? by : 'both');
 	let showDone = $state(false);
 	let W = $state(900);
 	let H = $state(560);
@@ -24,7 +30,7 @@
 	function readBy(): MosaicBy {
 		try {
 			const v = localStorage.getItem('toodly.mosaicBy');
-			return MOSAIC_MODES.includes(v as MosaicBy) ? (v as MosaicBy) : 'both';
+			return MOSAIC_MODES_ECONOMY.includes(v as MosaicBy) ? (v as MosaicBy) : 'both';
 		} catch {
 			return 'both';
 		}
@@ -35,9 +41,9 @@
 			localStorage.setItem('toodly.mosaicBy', m);
 		} catch {}
 	}
-	const names: Record<MosaicBy, string> = $derived({ priority: t('Priorità'), deadline: t('Vicinanza'), both: t('Entrambe') });
+	const names: Record<MosaicBy, string> = $derived({ priority: t('Priorità'), deadline: t('Vicinanza'), both: t('Entrambe'), amount: t('Importo') });
 	const info = $derived(groupInfo(store.groups, sorted, t('Senza gruppo')));
-	const tiles = $derived(buildMosaic(sorted, todayISO(), by, showDone, Math.max(W - 2, 50), Math.max(H - 2, 50)));
+	const tiles = $derived(buildMosaic(sorted, todayISO(), eff, showDone, Math.max(W - 2, 50), Math.max(H - 2, 50), (x) => { const f = figuresOf(x, store.listOf(x.list_id)); return f.net > 0 ? f.net : f.cost; }));
 	$effect(() => setVisibleOrder(tiles.map((x) => x.id)));
 </script>
 
@@ -46,8 +52,8 @@
 	<div class="flex shrink-0 flex-wrap items-center gap-1 px-4 pb-2 text-[12px]">
 		<span class="text-muted">{t('Dimensione in base a')}</span>
 		<div class="flex rounded-lg border border-border p-0.5">
-			{#each MOSAIC_MODES as m (m)}
-				<button class="rounded-md px-2 py-0.5 {by === m ? 'bg-accent-soft text-accent' : 'text-muted hover:text-fg'}" aria-pressed={by === m} onclick={() => setBy(m)}>{names[m]}</button>
+			{#each modes as m (m)}
+				<button class="rounded-md px-2 py-0.5 {eff === m ? 'bg-accent-soft text-accent' : 'text-muted hover:text-fg'}" aria-pressed={eff === m} onclick={() => setBy(m)}>{names[m]}</button>
 			{/each}
 		</div>
 		<button class="btn h-7 border-transparent bg-transparent" title={t('Mostra completati')} onclick={() => (showDone = !showDone)}>
@@ -88,6 +94,7 @@
 						<div class="absolute right-0 bottom-0 left-0 flex items-center gap-2 px-3.5 pb-2 text-[11px] whitespace-nowrap {late ? 'text-p3 font-semibold' : 'text-muted'}">
 							{#if blocked}<Hourglass size={11} class="shrink-0 text-p2" />{/if}
 							{#if tk.due_date}<span class="inline-flex items-center gap-1"><CalendarDays size={11} />{relativeDay(tk.due_date)}</span>{/if}
+							{#if ecoShow('mosaic')}<MoneyChip money={chipOf(tk)} />{/if}
 							{#if big}<span class="ml-auto min-w-0 truncate" style="color:var(--gacc)">{info.name(info.rootOf(tk))}</span>{/if}
 						</div>
 					{/if}

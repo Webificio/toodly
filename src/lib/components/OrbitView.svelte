@@ -4,6 +4,7 @@
 	import MapExport from './MapExport.svelte';
 	import MapCanvas from './MapCanvas.svelte';
 	import MapNode from './MapNode.svelte';
+	import { ecoShow, rootMoney } from '../economy.svelte';
 	import { BANDS, CORE_R, OUTER_R, buildOrbit, orbitToMermaid, orbitEdges, sectorPath, type Band } from '../orbit';
 	import { groupInfo } from '../maps';
 	import { paletteStyle } from '../graph';
@@ -81,7 +82,7 @@
 				<text x={model.c} y={model.c + 14} text-anchor="middle" font-size="10.5" style="fill:var(--muted)">{t('da fare ora')}</text>
 				{#each model.sectors as sec (sec.root)}
 					{@const p = sectorLabel(sec.start, sec.end)}
-					<text class="gx" x={p.x} y={p.y} text-anchor={p.right ? 'start' : 'end'} dominant-baseline="middle" font-size="12" font-weight="600" style="{paletteStyle(sec.color)}; fill:var(--gacc)">{sec.name} · {sec.count}</text>
+					<text class="gx" x={p.x} y={p.y} text-anchor={p.right ? 'start' : 'end'} dominant-baseline="middle" font-size="12" font-weight="600" style="{paletteStyle(sec.color)}; fill:var(--gacc)">{sec.name} · {sec.count}{#if ecoShow('orbit')}{@const mm = rootMoney(sec.root)}{#if mm} · {mm.text}<title>{mm.tip}</title>{/if}{/if}</text>
 				{/each}
 			</svg>
 			{#each model.taskOrder as id (id)}

@@ -2,6 +2,8 @@
 	import { CalendarDays, Hash, Hourglass, ListTree, Repeat } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import TaskQuickActions from './TaskQuickActions.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import { handleSelectClick, selection } from '../selection.svelte';
 	import { store } from '../store.svelte';
 	import { ui } from '../nav.svelte';
@@ -78,6 +80,7 @@
 			{#if task.recurrence !== 'none'}<Repeat size={10} class="shrink-0" />{/if}
 			{#if subs.length}<span class="inline-flex shrink-0 items-center gap-0.5"><ListTree size={10} />{subsDone}/{subs.length}</span>{/if}
 			{#if task.tags.length && w >= 120}<span class="inline-flex min-w-0 items-center text-accent"><Hash size={9} /><span class="truncate">{task.tags[0]}</span></span>{/if}
+			{#if ecoShow('cork') && w >= 120}<MoneyChip money={chipOf(task)} />{/if}
 			{#if list}<span class="ml-auto size-2 shrink-0 rounded-full" style="background:{list.color}" title={list.name}></span>{/if}
 		</div>
 	</div>

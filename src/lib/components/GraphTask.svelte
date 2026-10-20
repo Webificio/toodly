@@ -10,6 +10,8 @@
 	import { diffDays, relativeDay, todayISO } from '../dates';
 	import { isOverdue } from '../views';
 	import { draggable, dropzone, type DropEvent } from '../dnd.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import type { Task } from '../types';
 
 	/** Carta di un task nella vista Graph: stessi colori, stesse azioni e stesso pannello di modifica della Lista. */
@@ -80,6 +82,7 @@
 			{#if task.due_date}
 				<span class="inline-flex shrink-0 items-center gap-1 {dueCls}"><CalendarDays size={11} />{relativeDay(task.due_date)}{#if task.start_time}&nbsp;{task.start_time}{/if}</span>
 			{/if}
+			{#if ecoShow('graph')}<MoneyChip money={chipOf(task)} />{/if}
 			{#if task.recurrence !== 'none'}<span class="shrink-0"><Repeat size={11} /></span>{/if}
 			{#if subs.length}<span class="inline-flex shrink-0 items-center gap-1"><ListTree size={11} />{subsDone}/{subs.length}</span>{/if}
 			{#if task.tags.length}

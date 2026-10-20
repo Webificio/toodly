@@ -3,6 +3,8 @@
 	import { Plus } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import TaskMeta from './TaskMeta.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, sumOf } from '../economy.svelte';
 	import QuickInput from './QuickInput.svelte';
 	import { store } from '../store.svelte';
 	import { selection, handleSelectClick, setVisibleOrder } from '../selection.svelte';
@@ -95,6 +97,7 @@
 				<span class="size-2.5 rounded-full" style="background:{col.color}"></span>
 				<h3 class="text-[13px] font-semibold">{col.label}</h3>
 				<span class="text-[12px] text-muted">{byCol[col.key].length}</span>
+				{#if ecoShow()}<MoneyChip money={sumOf(byCol[col.key])} />{/if}
 				<button class="icon-btn ml-auto" aria-label={tt('Aggiungi')} onclick={() => (adding = adding === col.key ? null : col.key)}><Plus size={15} /></button>
 			</header>
 			<div class="flex min-h-12 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-3" data-scroll="y">

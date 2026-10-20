@@ -12,21 +12,22 @@ toodly is a desktop to-do app that keeps everything on your computer. This guide
 4. [Working with tasks](#4-working-with-tasks)
 5. [Views](#5-views)
 6. [Lists, groups and filters](#6-lists-groups-and-filters)
-7. [Multi-selection](#7-multi-selection)
-8. [Adding many tasks at once](#8-adding-many-tasks-at-once)
-9. [Windows and data sets](#9-windows-and-data-sets)
-10. [Tray, Quick Add and autostart](#10-tray-quick-add-and-autostart)
-11. [Backup and restore](#11-backup-and-restore)
-12. [Settings](#12-settings)
-13. [Keyboard shortcuts](#13-keyboard-shortcuts)
-14. [Where your data is stored](#14-where-your-data-is-stored)
-15. [Troubleshooting](#15-troubleshooting)
+7. [Economy and budget](#7-economy-and-budget)
+8. [Multi-selection](#8-multi-selection)
+9. [Adding many tasks at once](#9-adding-many-tasks-at-once)
+10. [Windows and data sets](#10-windows-and-data-sets)
+11. [Tray, Quick Add and autostart](#11-tray-quick-add-and-autostart)
+12. [Backup and restore](#12-backup-and-restore)
+13. [Settings](#13-settings)
+14. [Keyboard shortcuts](#14-keyboard-shortcuts)
+15. [Where your data is stored](#15-where-your-data-is-stored)
+16. [Troubleshooting](#16-troubleshooting)
 
 ## 1. First start
 
 When you open toodly for the first time it creates a data set called **Main data** with one list called **General**, and opens it. Type a task in the bar at the top and press **Enter**: you are ready to go.
 
-If you already have several data sets, toodly asks which one to open in each new window (see [Windows and data sets](#9-windows-and-data-sets)).
+If you already have several data sets, toodly asks which one to open in each new window (see [Windows and data sets](#10-windows-and-data-sets)).
 
 ## 2. The window
 
@@ -160,6 +161,9 @@ One tree per group. Leaves are open tasks (colour = days to the deadline, size =
 
 The day as a timeline. Tasks with a date and a time are **blocks**: drag to move (15-minute steps), drag the bottom edge to resize, ▲ ▼ move by 30 minutes (`Shift`: 15), ✕ takes the task off the schedule. Dashed green areas are **free slots** inside work hours (08:00–19:00). The *To schedule* tray lists the day's tasks without a time, then overdue and undated ones: **drag** a card into a free slot (its length is the **estimated duration**, editable on the card) or press **→** to put it in the first slot that fits. Use the arrows above to change day; *Planned* and *Free* show the totals.
 
+### Budget
+Available when **Settings → Economy** is on (see [Economy and budget](#7-economy-and-budget)). A report of the estimated **revenue, costs and margin** of the tasks in the current view, by group (sub-groups indented) and by period: months or weeks, with ◀ ▶ to move and *Today* to come back. The switch *Margin / Revenue / Costs* chooses what the table shows; above it there are the totals of the visible period (net revenue, VAT, gross revenue, labour cost, expenses, margin) and a bar chart. Besides the period columns the table has *Out of range* (dated tasks outside the visible periods), *No date* and *Total*. Amounts are assigned to the **due date** of each task. If your lists use different currencies a switch lets you look at one currency at a time (they are never added together). *Completed* shows or hides finished tasks; **CSV** saves the tasks with amounts (`;` and decimal comma in Italian, `,` and decimal point in English; opens in Excel).
+
 ### Graph
 
 Groups, sub-groups, tasks and sub-tasks drawn as a tree on a large canvas. The bar at the top is the same as in the List (new task, new task from a template, new group).
@@ -208,16 +212,111 @@ A filter is a saved search. Create one with **New filter** in the sidebar:
 
 The sidebar entry **No filters** turns off the active filter and goes back to *All tasks*.
 
-## 7. Multi-selection
+## 7. Economy and budget
+
+Besides being a to-do list, toodly can work as a small **budget manager**: for every task you can estimate how much the work costs and how much it brings in, and then see the totals by group, by list and by period. Everything is **optional and off by default**; with Economy off nothing changes on screen.
+
+All amounts are **estimates** (planned figures, not accounting). They are stored in cents, shown in the number format of the app language, and kept in the same data set as your tasks, so they follow it in backups.
+
+### Turn it on
+
+Open **Settings → Economy** and switch it on. This adds:
+- an **Economy** section in the task details panel;
+- *currency*, *hourly rate* and *VAT rate* in the list editor;
+- an **Economy** button in the multi-selection bar;
+- chips and totals in the views (you choose which ones, see [Where amounts appear](#where-amounts-appear));
+- the **Budget** view in the view switcher.
+
+### Set up your lists
+
+Edit a list (pencil next to it in the sidebar) and fill in the **Economy** box:
+- **Currency** (euro, dollar, pound, Swiss franc and a few more). Every task of the list uses it. New lists start with the currency of your first list.
+- **Hourly rate**: what one hour of work costs. It is the default for all the tasks of the list.
+- **VAT on revenue**: 0, 4, 5, 10 or 22% (22% by default).
+
+A list is the natural place for a client, a project or a cost centre: if you work for several clients with different rates, give each one its own list.
+
+### Estimate a task
+
+Open a task and expand **Economy** (it also shows the margin next to the title when closed):
+
+| Field | Meaning |
+| --- | --- |
+| **Hourly rate** | Leave empty to use the list's rate; type a value to override it for this task. |
+| **Labour cost** | Calculated, read-only: *estimated duration × hourly rate*. It needs the **Estimated duration** in *Planning*; without a duration the labour cost is 0 (toodly does not invent a cost for tasks you have not estimated). |
+| **Expenses (excl. VAT)** | Money you will spend for this task (materials, licences, travel…), **net of VAT**. |
+| **Revenue (net)** | Money the task will bring in, **net of VAT**. |
+| **VAT on revenue** | Empty = the list's rate, or pick another rate for this task. |
+| **Gross revenue** and VAT | Calculated from the net revenue and the VAT rate. |
+| **Margin** | Calculated: *net revenue − (labour cost + expenses)*. Green when positive, red when negative. |
+
+You type amounts naturally: `1250`, `1.250,50` and `12,5` are all understood (the decimal separator follows the app language). An empty field means "no amount".
+
+**Worked example.** List *Clients* with a rate of 50 €/h and 22% VAT. Task *Website*, estimated duration 12 h, expenses 80 € (hosting, net), revenue 1,500 € net:
+- labour cost = 12 h × 50 € = 600 €;
+- cost = 600 + 80 = 680 €;
+- VAT = 1,500 × 22% = 330 €, gross revenue = 1,830 €;
+- margin = 1,500 − 680 = **820 €**.
+
+Expenses are entered net of VAT on purpose: for a business VAT is a pass-through, so margins are cleaner without it. Only the revenue shows the gross figure (the amount you will invoice).
+
+### Sub-tasks, groups and totals
+
+- Every task counts **its own amounts**. The total of a group is the sum of all the tasks inside it, **including sub-tasks and sub-groups**.
+- A task with sub-tasks adds its own amounts to those of its sub-tasks, so enter an amount either on the parent or on the sub-tasks, not on both, or it is counted twice. The *Economy* section of the parent also shows "With sub-tasks", the total of the whole branch.
+- Completed tasks keep counting (the figures are estimates of the whole job); the Budget view has a *Completed* switch to leave them out.
+- Totals follow what the view is showing: in a list's view the groups show the totals of that list's tasks.
+
+### Several currencies
+
+Each list has one currency, so a data set can contain several. Amounts in different currencies are **never added together**: a group that mixes them shows one amount per currency, and the Budget view and the Statistics table have a switch or a row per currency. toodly does not convert currencies.
+
+### Where amounts appear
+
+With Economy on, a small green/red chip shows the **margin** of a task. A task with costs but no revenue shows its cost in neutral colour. Hover any chip for the breakdown (labour cost, expenses, net revenue, VAT, gross revenue, margin). Under **Settings → Economy → Where to show amounts** you can switch the amounts off in the views where you do not want them; the **Budget** view is always available.
+- **List**: chip on each task, margin on group rows, and the total of each day section in *Today* / *Next 7 days*.
+- **Kanban**: chip on each card and the total at the top of each column.
+- **Calendar** (week view): the total of the day's tasks under its date.
+- **Gantt**: margin next to each group name and chip on each task. **Graph**: chip on group nodes and task cards.
+- **Orbit / Metro / Road**: margin of each group next to its sector, line or lane label; the hover cards of **Orbit, Metro, Matrix and Grove**, the **Cork** notes and the **Road** cards show the task chip.
+- **Matrix**: the net revenue of each quadrant. **Mosaic**: chip on each tile and a new size criterion, *Amount* (net revenue, or cost when there is none).
+- **Ridge**: the day's total in its panel and tooltip. **Slot**: chip on the tray cards and amounts in the block tooltip.
+- **Sidebar**: margin next to each list. **Statistics**: revenue, costs and margin per list, with a total per currency.
+
+### The Budget view
+
+See [Budget](#budget) in the views chapter: revenue, costs and margin by group and by month or week, period totals, a chart and the CSV export. Amounts are assigned to the **due date** of each task; tasks without a date are in the *No date* column and dated tasks outside the visible periods in *Out of range*.
+
+### Setting many tasks at once, templates and recurrence
+
+- In the multi-selection bar, **Economy** sets the hourly rate, expenses and/or revenue of all the selected tasks. Only the fields you fill in are applied; **Clear** empties the three fields on all of them.
+- **Templates** remember the rate, expenses, revenue, VAT rate and estimated duration of the task and of its sub-tasks.
+- A **recurring** task passes its amounts and duration on to the next occurrence, so every occurrence counts in the periods it falls in.
+
+### Export and privacy
+
+- **CSV** (Budget view): one row per task with amounts: title, group, list, due date, currency, duration, labour cost, expenses, net revenue, VAT rate, VAT, gross revenue and margin. In Italian it uses `;` and the decimal comma, in English `,` and the decimal point, so it opens correctly in Excel.
+- Amounts are part of the **backup** (ZIP), so a backup contains your figures.
+- Amounts are **never** included in the Mermaid exports (Gantt, Graph, Orbit, Metro), in the Markdown list export or in the calendar (`.ics`) export.
+
+### Tips and troubleshooting
+
+- *The labour cost is 0*: set the task's **Estimated duration** and check that the list (or the task) has an hourly rate.
+- *The margin looks too low or too high*: check that the amount is not entered on both the parent task and its sub-tasks.
+- *A group shows two amounts*: its tasks belong to lists with different currencies.
+- *I do not see chips in a view*: check **Settings → Economy → Where to show amounts**.
+- *I want to hide everything*: switch Economy off; your amounts are kept and come back when you switch it on again.
+
+## 8. Multi-selection
 
 - `Ctrl/Cmd + click` adds or removes a task from the selection.
 - `Shift + click` selects a range.
 - `Ctrl/Cmd + A` selects every visible task.
 - `Esc` (or **None** in the bar) clears the selection.
 
-A bar appears at the bottom with the number of selected tasks. Use it to set the **due date** (quick choices such as Today, Tomorrow, In a week, or a specific date), **estimated duration** (type the hours, `.5` is half an hour; *Default* resets it), **priority**, **list**, **group** and **status** for all of them at once, or to **complete** or **delete** them.
+A bar appears at the bottom with the number of selected tasks. Use it to set the **due date** (quick choices such as Today, Tomorrow, In a week, or a specific date), **estimated duration** (type the hours, `.5` is half an hour; *Default* resets it), **priority**, **list**, **group** and **status** for all of them at once, or to **complete** or **delete** them With [Economy](#7-economy-and-budget) on there is also an **Economy** button to set hourly rate, expenses and revenue.
 
-## 8. Adding many tasks at once
+## 9. Adding many tasks at once
 
 Click **Add multiple tasks from text** in the sidebar (or press `Ctrl+Shift+I`) and paste or type one task per line.
 
@@ -227,7 +326,7 @@ Click **Add multiple tasks from text** in the sidebar (or press `Ctrl+Shift+I`) 
 
 A preview tells you how many tasks and groups will be created. The reverse is also possible: **Export to .md** on a list saves its tasks in a Markdown file that you can import again.
 
-## 9. Windows and data sets
+## 10. Windows and data sets
 
 ### Data sets
 
@@ -246,7 +345,7 @@ Manage them in **Settings → Data → Manage…**: open a set here or in a new 
 
 Press `Ctrl/Cmd + N` or use **New window** to open another window. Each window has its own view (for example Calendar in one and the *Work* list in another). The window title shows `toodly - <data set name>`. On the next start every window comes back where it was.
 
-## 10. Tray, Quick Add and autostart
+## 11. Tray, Quick Add and autostart
 
 ### Tray
 
@@ -267,7 +366,7 @@ If the shortcut does nothing, another application may already be using it. On Li
 
 In **Settings** you can launch toodly when the system starts. It then restores your windows, or stays quietly in the tray if none were open.
 
-## 11. Backup and restore
+## 12. Backup and restore
 
 In **Settings → Data**:
 
@@ -295,20 +394,21 @@ In **Settings → Data → Automatic backup** choose how often (daily/weekly), t
 
 **Settings → Delete all data → Delete…** permanently removes every data set, task, attachment and local preference. One window with an empty "Main data" set remains. The language is kept. Export a backup first if you might need anything.
 
-## 12. Settings
+## 13. Settings
 
 Open **Settings** from the sidebar.
 
 - **Appearance**: *Light*, *Dark* or *System*.
 - **Theme**: the look of the app, independent from the mode above: *Default*, *Material*, *CRT* (green phosphors on black with the system monospace font; it is always dark, so the mode buttons are disabled), *Nord*, *Solarized*, *Dracula*, *Gruvbox* and *Rosé Pine*. Every theme except CRT has a light and a dark variant. The choice is shared by all windows. See [THEMES.md](THEMES.md) for a description of each theme and how to create or customise one.
 - **Language**: Italian or English (shared by all windows; also changes the tray menu).
+- **Economy**: turns on the budget-manager features: estimated hourly rate, expenses and revenue per task, list currency/rate/VAT, chips and totals in the views and the Budget view. Below it, **Where to show amounts** has one switch per view. Full description in [Economy and budget](#7-economy-and-budget).
 - **Number tasks in the list**: shows a progressive number (purple) between the checkbox and the title of each task, counted among the tasks of the same level; groups are not counted and sub-tasks restart from 1.
 - **Launch toodly at system startup**.
 - **Shortcuts**: a reminder of the main shortcuts.
 - **Data**: manage data sets, export, import, delete everything.
 - **About**: version and author.
 
-## 13. Keyboard shortcuts
+## 14. Keyboard shortcuts
 
 | Shortcut | Action |
 |---|---|
@@ -346,7 +446,7 @@ Open **Settings** from the sidebar.
 
 Turn on **Milestone** in a task to show it as a diamond. *Critical path* highlights what determines the end date, *Late only* shows what is overdue or blocked by a late prerequisite. To link two tasks, drag from the round handle at the right end of a bar and drop it on another bar: the second task will depend on the first.
 
-## 14. Where your data is stored
+## 15. Where your data is stored
 
 Everything is stored locally; toodly has no account and sends nothing to the internet.
 
@@ -358,7 +458,7 @@ Everything is stored locally; toodly has no account and sends nothing to the int
 
 To move your data to another computer, use **Export everything…** and **Import from zip…** rather than copying files.
 
-## 15. Troubleshooting
+## 16. Troubleshooting
 
 - **The window opened on a screen that is no longer connected**: toodly checks that a saved position is still visible and centers the window otherwise.
 - **The global shortcut does not work**: another app may use `Ctrl+Shift+Space`. Close that app or use the tray menu *New Quick Task*.

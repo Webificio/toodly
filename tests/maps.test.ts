@@ -368,3 +368,121 @@ describe('durata stimata', () => {
 		expect(describeDuration(80 * 60, tr, 'en')).toBe('2 settimane');
 	});
 });
+
+import { economyByGroup, figuresOf, formatAmount, formatMoney, parseMoney, summarize, totalsOf } from '../src/lib/money';
+import { buildBudget, buildCsv, periodsFrom, shiftPeriod } from '../src/lib/budget';
+describe('economia', () => {
+	const eur = { currency: 'EUR', rate_cents: 5000, vat_rate: 22 };
+	const usd = { currency: 'USD', rate_cents: null, vat_rate: 0 };
+	const listOf = (id: string | null) => (id === 'l1' ? eur : id === 'l2' ? usd : undefined);
+	it('importi digitati', () => {
+		expect(parseMoney('')).toBeNull();
+		expect(parseMoney('1250')).toBe(125000);
+		expect(parseMoney('12,5', ',')).toBe(1250);
+		expect(parseMoney('12.5', ',')).toBe(1250);
+		expect(parseMoney('1.250,50', ',')).toBe(125050);
+		expect(parseMoney('1,250.50', '.')).toBe(125050);
+		expect(parseMoney('1.250', ',')).toBe(125000); // migliaia nel locale con la virgola
+		expect(parseMoney('€ 99')).toBe(9900);
+		expect(parseMoney('abc')).toBeUndefined();
+		expect(parseMoney('-5')).toBeUndefined();
+		expect(formatAmount(125050, ',')).toBe('1250,50');
+		expect(formatAmount(125000)).toBe('1250');
+	});
+	it('costo, IVA e margine di un task', () => {
+		const f = figuresOf(mkTask({ id: 'a', duration_min: 90, expense_cents: 2000, revenue_cents: 20000 }), eur);
+		expect(f).toEqual({ labor: 7500, expense: 2000, cost: 9500, net: 20000, vat: 4400, gross: 24400, margin: 10500 });
+		// senza durata niente costo uomo; tariffa del task e aliquota del task prevalgono su quelle della lista
+		expect(figuresOf(mkTask({ id: 'b' }), eur).labor).toBe(0);
+		const g = figuresOf(mkTask({ id: 'c', duration_min: 60, rate_cents: 10000, revenue_cents: 10000, vat_rate: 10 }), eur);
+		expect(g.labor).toBe(10000);
+		expect(g.vat).toBe(1000);
+		expect(formatMoney(1250050, 'EUR', 'it')).toContain('12.500,50');
+	});
+	it('totali per valuta e per gruppo (sottogruppi e sotto-task compresi)', () => {
+		const tasks = [
+			mkTask({ id: 'p', list_id: 'l1', group_id: 'g1', revenue_cents: 10000 }),
+			mkTask({ id: 's', list_id: 'l1', parent_id: 'p', group_id: null, duration_min: 60 }), // sotto-task: gruppo del padre
+			mkTask({ id: 'c', list_id: 'l1', group_id: 'g2', expense_cents: 500 }),
+			mkTask({ id: 'u', list_id: 'l2', group_id: 'g1', revenue_cents: 700 }),
+			mkTask({ id: 'n', list_id: 'l1', group_id: null, revenue_cents: 100 })
+		];
+		const groups = [{ id: 'g1', parent_id: null }, { id: 'g2', parent_id: 'g1' }];
+		const m = economyByGroup(tasks, groups, listOf);
+		const g1 = m.get('g1')!;
+		expect(g1.get('EUR')!.net).toBe(10000);
+		expect(g1.get('EUR')!.cost).toBe(5000 + 500); // 1 h × 50 + spese del sottogruppo
+		expect(g1.get('USD')!.net).toBe(700);
+		expect(m.get('g2')!.get('EUR')!.cost).toBe(500);
+		expect(m.get(null)!.get('EUR')!.net).toBe(100);
+		expect(totalsOf(tasks, listOf).get('EUR')!.net).toBe(10100);
+		const s = summarize(g1, (k, p) => (p ? k.replace(/\{(\w+)\}/g, (_, n) => String(p[n])) : k), 'it')!;
+		expect(s.tone).toBe('pos');
+		expect(s.text.split(' · ')).toHaveLength(2); // una voce per valuta
+	});
+	it('periodi e budget', () => {
+		const ps = periodsFrom('2026-10-20', 'month', 3);
+		expect(ps.map((p) => p.from)).toEqual(['2026-10-01', '2026-11-01', '2026-12-01']);
+		expect(ps[0].to).toBe('2026-10-31');
+		expect(periodsFrom('2026-10-20', 'week', 1)[0]).toEqual({ key: '2026-10-19', from: '2026-10-19', to: '2026-10-25' });
+		expect(shiftPeriod('2026-10-20', 'month', -2)).toBe('2026-08-01');
+		const tasks = [
+			mkTask({ id: 'a', list_id: 'l1', group_id: 'g', due_date: '2026-10-05', revenue_cents: 1000 }),
+			mkTask({ id: 'b', list_id: 'l1', group_id: 'g', due_date: '2026-11-10', expense_cents: 400 }),
+			mkTask({ id: 'c', list_id: 'l1', group_id: 'g', due_date: '2027-05-01', revenue_cents: 50 }),
+			mkTask({ id: 'd', list_id: 'l1', group_id: null, revenue_cents: 7 }),
+			mkTask({ id: 'e', list_id: 'l1', group_id: 'g', due_date: '2026-10-06', revenue_cents: 99, completed: true }),
+			mkTask({ id: 'x', list_id: 'l2', group_id: 'g', due_date: '2026-10-05', revenue_cents: 5 })
+		];
+		const groups = [{ id: 'g', parent_id: null, sort: 1, name: 'G' }];
+		const m = buildBudget({ tasks, groups, listOf, periods: ps, currency: 'EUR', showDone: false });
+		expect(m.currencies).toEqual(['EUR', 'USD']);
+		expect(m.rows.map((r) => r.id)).toEqual(['g', null]);
+		const row = m.rows[0].cells;
+		expect(row.periods[0].net).toBe(1000);
+		expect(row.periods[1].expense).toBe(400);
+		expect(row.outside.net).toBe(50);
+		expect(m.rows[1].cells.undated.net).toBe(7);
+		expect(m.total.total.net).toBe(1057);
+		expect(buildBudget({ tasks, groups, listOf, periods: ps, currency: 'EUR', showDone: true }).total.total.net).toBe(1156);
+	});
+	it('CSV', () => {
+		const t1 = mkTask({ id: 'a', title: 'Prova; "x"', list_id: 'l1', duration_min: 90, revenue_cents: 10000 });
+		const csv = buildCsv([{ task: t1, group: 'G', list: 'L', listMoney: eur }], ['A', 'B'], 'it');
+		const lines = csv.replace('﻿', '').trim().split('\r\n');
+		expect(lines[1]).toBe('"Prova; ""x""";G;L;;EUR;1,50;75,00;0,00;100,00;22;22,00;122,00;25,00');
+	});
+});
+
+import { summarizeRevenue, taskChip } from '../src/lib/money';
+import { buildMosaic as buildMosaicAmount } from '../src/lib/mosaic';
+describe('economia nelle viste', () => {
+	const tr = (k: string, p?: Record<string, string | number>) => (p ? k.replace(/\{(\w+)\}/g, (_, n) => String(p[n])) : k);
+	const eur = { currency: 'EUR', rate_cents: 5000, vat_rate: 22 };
+	it('chip del task', () => {
+		expect(taskChip(mkTask({ id: 'a' }), eur, tr, 'it')).toBeNull();
+		const withRev = taskChip(mkTask({ id: 'a', duration_min: 60, revenue_cents: 20000 }), eur, tr, 'it')!;
+		expect(withRev.tone).toBe('pos');
+		expect(withRev.text).toContain('150');
+		const loss = taskChip(mkTask({ id: 'a', duration_min: 120, revenue_cents: 5000 }), eur, tr, 'it')!;
+		expect(loss.tone).toBe('neg');
+		const costOnly = taskChip(mkTask({ id: 'a', expense_cents: 2500 }), eur, tr, 'it')!;
+		expect(costOnly.tone).toBe('none');
+		expect(costOnly.text).toContain('25');
+		expect(costOnly.text).not.toContain('-');
+	});
+	it('solo ricavi per valuta', () => {
+		const t = totalsOf([mkTask({ id: 'a', revenue_cents: 1000 }), mkTask({ id: 'b', expense_cents: 500 })], () => eur);
+		const s = summarizeRevenue(t, tr, 'it')!;
+		expect(s.text).toContain('10');
+		expect(summarizeRevenue(totalsOf([mkTask({ id: 'c', expense_cents: 500 })], () => eur), tr, 'it')).toBeNull();
+	});
+	it('mosaico per importo', () => {
+		const tasks = [mkTask({ id: 'big', revenue_cents: 90000 }), mkTask({ id: 'small', revenue_cents: 10000 }), mkTask({ id: 'none' })];
+		const tiles = buildMosaicAmount(tasks, '2026-10-20', 'amount', false, 400, 200, (x) => x.revenue_cents ?? 0);
+		const area = (id: string) => { const q = tiles.find((x) => x.id === id)!; return q.w * q.h; };
+		expect(tiles).toHaveLength(3); // il task senza importo resta visibile
+		expect(area('big')).toBeGreaterThan(area('small') * 5);
+		expect(area('none')).toBeGreaterThan(0);
+	});
+});

@@ -4,6 +4,8 @@
 	import { store } from '../store.svelte';
 	import { t as tt } from '../i18n.svelte';
 	import { ui } from '../nav.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, sumOf } from '../economy.svelte';
 	import { addDays, formatWeekday, fromMinutes, parseISO, startOfWeek, todayISO, toMinutes } from '../dates';
 	import { drag, draggable, dropzone } from '../dnd.svelte';
 	import type { Task } from '../types';
@@ -128,6 +130,7 @@
 				<div class="py-1.5 text-center">
 					<div class="text-[11px] tracking-wide text-muted uppercase">{formatWeekday(day)}</div>
 					<div class="mx-auto grid size-7 place-items-center rounded-full text-[14px] font-semibold {day === today ? 'bg-accent text-accent-fg' : ''}">{parseISO(day).getDate()}</div>
+					{#if ecoShow('calendar')}{@const dm = sumOf(tasks.filter((x) => x.due_date === day))}{#if dm}<div class="mt-0.5"><MoneyChip money={dm} /></div>{/if}{/if}
 				</div>
 				<div
 					class="min-h-7 space-y-0.5 px-1 pb-1 transition-colors {overAllDay === day ? 'bg-active' : ''}"

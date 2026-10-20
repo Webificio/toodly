@@ -12,6 +12,7 @@
 	import { nav, ui } from '../nav.svelte';
 	import { inScope, sortTasks } from '../views';
 	import { todayISO } from '../dates';
+	import { ecoShow, revenueOf } from '../economy.svelte';
 
 	/** Matrix: importanza per scadenza. In alto i task di priorità alta e media, a sinistra quelli scaduti o entro una settimana. */
 	const matched = $derived(store.tasks.filter((x) => inScope(x, nav.scope, store.filters, store.blockedIds)));
@@ -20,6 +21,8 @@
 	const model = $derived(buildMatrix({ groups: store.groups, tasks: sorted, today: todayISO(), showDone, ungroupedLabel: t('Senza gruppo') }));
 	const info = $derived(groupInfo(store.groups, sorted, t('Senza gruppo')));
 	$effect(() => setVisibleOrder(model.taskOrder));
+	/** ricavi netti dei task di ogni quadrante (solo con Economia attiva) */
+	const quadRevenue = $derived(ecoShow('matrix') ? { now: revenueOf(model.nodes.filter((n) => n.quad === 'now').map((n) => n.task)), plan: revenueOf(model.nodes.filter((n) => n.quad === 'plan').map((n) => n.task)), squeeze: revenueOf(model.nodes.filter((n) => n.quad === 'squeeze').map((n) => n.task)), later: revenueOf(model.nodes.filter((n) => n.quad === 'later').map((n) => n.task)) } : null);
 
 	const labels = $derived.by(() => {
 		const obstacles = model.nodes.map((n) => ({ id: n.task.id, x: n.x - n.r, y: n.y - n.r, w: n.r * 2, h: n.r * 2 }));
@@ -62,6 +65,7 @@
 					<rect x={X0 + (z.col * W) / 2 + 4} y={Y0 + (z.row * H) / 2 + 4} width={W / 2 - 8} height={H / 2 - 8} rx="16" style="fill:{z.color}" opacity={z.q === 'now' ? 0.1 : 0.06} />
 					<text x={X0 + (z.col * W) / 2 + 22} y={Y0 + (z.row * H) / 2 + 36} font-size="18" font-weight="700" style="fill:{z.color}">{z.name}</text>
 					<text x={X0 + ((z.col + 1) * W) / 2 - 20} y={Y0 + (z.row * H) / 2 + 36} font-size="14" font-weight="600" text-anchor="end" style="fill:{z.color}" opacity="0.8">{model.counts[z.q]}</text>
+					{#if quadRevenue?.[z.q]}<text x={X0 + (z.col * W) / 2 + 22} y={Y0 + (z.row * H) / 2 + 58} font-size="13" font-weight="600" style="fill:{z.color}" opacity="0.9">{t('Ricavi')}: {quadRevenue[z.q]?.text}<title>{quadRevenue[z.q]?.tip}</title></text>{/if}
 				{/each}
 				<text x={X0 - 14} y={Y0 + 34} font-size="11" font-weight="600" text-anchor="end" style="fill:var(--faint)">{t('priorità alta')}</text>
 				<text x={X0 - 14} y={Y0 + H - 16} font-size="11" font-weight="600" text-anchor="end" style="fill:var(--faint)">{t('priorità bassa')}</text>

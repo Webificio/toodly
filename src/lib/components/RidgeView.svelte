@@ -8,6 +8,8 @@
 	import { paletteStyle } from '../graph';
 	import { t } from '../i18n.svelte';
 	import DurationField from './DurationField.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { ecoShow, sumOf } from '../economy.svelte';
 	import { store } from '../store.svelte';
 	import { handleSelectClick, selection, setVisibleOrder } from '../selection.svelte';
 	import { nav, ui } from '../nav.svelte';
@@ -146,7 +148,7 @@
 					<text x={cx(i)} y={base + 36} text-anchor="middle" font-size="11" style="fill:var(--faint)">{d.key === 'late' ? '' : step >= 22 ? new Date(d.key + 'T00:00:00').getDate() : ''}</text>
 					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 					<rect class="cursor-pointer" x={L + i * step} y={TOP - 14} width={step} height={base - TOP + 14 + 40} fill="transparent" onclick={() => (selDay = d.key)}>
-						<title>{d.key === 'late' ? t('Scaduti') : formatDayLong(d.key)} · {fmtDur(d.minutes)}</title>
+						<title>{d.key === 'late' ? t('Scaduti') : formatDayLong(d.key)} · {fmtDur(d.minutes)}{ecoShow('ridge') && sumOf(d.tasks) ? '\n' + sumOf(d.tasks)?.tip : ''}</title>
 					</rect>
 				{/each}
 			</svg>
@@ -155,7 +157,7 @@
 		<aside class="flex w-[350px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-elev">
 			{#if day}
 				<div class="border-b border-border px-3 py-2.5">
-					<div class="text-[13.5px] font-semibold">{day.key === 'late' ? t('Scaduti') : formatDayLong(day.key)} · {fmtDur(day.minutes)}</div>
+					<div class="flex items-center gap-2 text-[13.5px] font-semibold"><span>{day.key === 'late' ? t('Scaduti') : formatDayLong(day.key)} · {fmtDur(day.minutes)}</span>{#if ecoShow('ridge')}<MoneyChip money={sumOf(day.tasks)} />{/if}</div>
 					{#if day.over}<div class="text-[11.5px] font-semibold text-p3">{t('{x} oltre la capacità', { x: fmtDur(day.minutes - capH * 60) })}</div>
 					{:else}<div class="text-[11.5px] text-muted">{t('{x} liberi', { x: fmtDur(Math.max(0, capH * 60 - day.minutes)) })}</div>{/if}
 				</div>

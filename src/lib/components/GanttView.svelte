@@ -11,6 +11,8 @@
 	import { currentWorkspace } from '../db';
 	import { collapsedGroups, loadCollapsed, toggleGroup } from '../groupui.svelte';
 	import { inScope, parseScope, sortTasks } from '../views';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow, groupMoney } from '../economy.svelte';
 	import { ganttToMermaid, exportGanttMd } from '../exportgantt';
 	import { addDays, diffDays, parseISO, startOfMonth, startOfWeek, taskStart, todayISO, toISO } from '../dates';
 	import type { Task } from '../types';
@@ -580,6 +582,7 @@
 								<span class="grid w-4 shrink-0 place-items-center text-faint"><ChevronRight size={14} class="transition-transform duration-150 {r.collapsed ? '' : 'rotate-90'}" /></span>
 								{#if r.collapsed}<Folder size={16} class="shrink-0 text-accent" />{:else}<FolderOpen size={16} class="shrink-0 text-accent" />{/if}
 								<span class="min-w-0 truncate text-[13px] font-semibold" title={r.name}>{r.name}</span>
+								{#if ecoShow('gantt')}<MoneyChip money={groupMoney(r.id)} class="ml-auto" />{/if}
 							</div>
 						{:else if r.compact}
 							{@const task = r.task}
@@ -627,6 +630,7 @@
 								<Checkbox checked={done} size={16} color={colorOf(task)} blocked={!done && store.blockedIds.has(task.id)} onchange={(v) => store.setCompleted(task.id, v)} />
 								{#if uiprefs.showNumbers && r.num > 0}<span class="min-w-[1.25em] shrink-0 text-right text-[12.5px] font-semibold text-accent tabular-nums">{r.num}</span>{/if}
 								<span class="min-w-0 flex-1 truncate text-[13px] {done ? 'text-muted line-through' : ''} {task.due_date ? '' : 'italic'}" title={task.due_date ? task.title : task.title + ' — ' + t('senza scadenza')}>{task.title}</span>
+								{#if ecoShow('gantt')}<MoneyChip money={chipOf(task)} />{/if}
 								<button class="icon-btn size-5 shrink-0 opacity-0 group-hover/row:opacity-100" title={t('Escludi dal Gantt')} aria-label={t('Escludi dal Gantt')} onclick={(e) => { e.stopPropagation(); store.updateTask(task.id, { in_gantt: false }); }}><EyeOff size={12} /></button>
 							</div>
 						{/if}

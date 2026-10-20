@@ -8,7 +8,10 @@
 	import { FolderPlus, LayoutTemplate } from '@lucide/svelte';
 	import { collapsedGroups, loadCollapsed, toggleGroup, expandGroup } from '../groupui.svelte';
 	import { currentWorkspace } from '../db';
-	import { t } from '../i18n.svelte';
+	import { t, locale } from '../i18n.svelte';
+	import { economyByGroup, summarize, type Summary } from '../money';
+	import { ecoShow, sumOf } from '../economy.svelte';
+	import MoneyChip from './MoneyChip.svelte';
 	import { store } from '../store.svelte';
 	import { setVisibleOrder } from '../selection.svelte';
 	import { nav, ui } from '../nav.svelte';
@@ -65,7 +68,7 @@
 	const groupOf = (t: Task) => (t.group_id && store.groupsById.has(t.group_id) ? t.group_id : null);
 
 	type Item =
-		| { kind: 'group'; group: Group; depth: number; count: GroupCount; collapsed: boolean }
+		| { kind: 'group'; group: Group; depth: number; count: GroupCount; collapsed: boolean; money: Summary | null }
 		| { kind: 'add'; group: Group; depth: number }
 		| { kind: 'row'; row: Row };
 
@@ -107,6 +110,13 @@
 		return c;
 	});
 
+	/** Importi stimati per gruppo (sotto-gruppi e sotto-task compresi), solo con «Economia» attiva. */
+	const econ = $derived(ecoShow('list') ? economyByGroup(matched, store.groups, (id) => store.listOf(id)) : null);
+	const moneyOf = (gid: string): Summary | null => {
+		const tot = econ?.get(gid);
+		return tot ? summarize(tot, t, locale()) : null;
+	};
+
 	const items = $derived.by(() => {
 		const build = (parent: string | null, depth: number): Item[] => {
 			const out: Item[] = [];
@@ -114,7 +124,7 @@
 			for (const g of store.groupChildren(parent)) {
 				const count = counts.get(g.id) ?? { total: 0, high: 0, medium: 0 };
 								const isCollapsed = collapsedGroups.has(g.id);
-				out.push({ kind: 'group', group: g, depth, count, collapsed: isCollapsed });
+				out.push({ kind: 'group', group: g, depth, count, collapsed: isCollapsed, money: moneyOf(g.id) });
 				if (!isCollapsed) {
 					if (addingIn === g.id) out.push({ kind: 'add', group: g, depth: depth + 1 });
 					out.push(...build(g.id, depth + 1));
@@ -274,6 +284,7 @@
 						<span class="text-[12px] font-semibold tracking-wide uppercase {sec.tone === 'late' ? 'text-p3' : sec.tone === 'today' ? 'text-accent' : 'text-muted'}">{sec.label}</span>
 						<span class="text-[11.5px] text-faint">
 							{sec.count === 1 ? t('1 attività') : t('{n} attività', { n: sec.count })}{#if sec.minutes > 0} · {fmtLoad(sec.minutes)} {t('pianificate')}{#if sec.untimed > 0}, {sec.untimed} {t('senza orario')}{/if}{/if}
+							{#if ecoShow('list')}<MoneyChip money={sumOf(sec.rows.map((r) => r.task))} class="ml-2 align-middle" />{/if}
 						</span>
 					</div>
 					{#each sec.rows as row (row.task.id)}
@@ -299,6 +310,7 @@
 							depth={it.depth}
 							count={it.count}
 							collapsed={it.collapsed}
+							money={it.money}
 							ontoggle={() => toggleGroup(it.group.id)}
 							onaddtask={() => { expandGroup(it.group.id); addingIn = addingIn === it.group.id ? null : it.group.id; }}
 						/>

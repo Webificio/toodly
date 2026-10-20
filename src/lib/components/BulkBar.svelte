@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { CalendarDays, Flag, FolderOpen, Folder, Layers, CheckCheck, Trash2, X, ChevronDown, Timer } from '@lucide/svelte';
+	import { CalendarDays, Flag, FolderOpen, Folder, Layers, CheckCheck, Trash2, X, ChevronDown, Timer, Wallet } from '@lucide/svelte';
 	import { store } from '../store.svelte';
 	import { showToast, askConfirm } from '../nav.svelte';
 	import { selection, clearSelection, selectAll } from '../selection.svelte';
@@ -8,6 +8,8 @@
 	import { mIn, mOut } from '../motion';
 	import { t as tt } from '../i18n.svelte';
 	import DurationField from './DurationField.svelte';
+	import MoneyField from './MoneyField.svelte';
+	import { uiprefs } from '../uiprefs.svelte';
 	import { PRIORITIES, STATUSES, type Priority, type Status } from '../types';
 
 	// ignora gli ID non più esistenti (task eliminati da un'altra finestra)
@@ -17,11 +19,16 @@
 	let dateValue = $state(todayISO());
 	let durPick = $state(false);
 	let durValue = $state<number | null>(null);
+	let ecoPick = $state(false);
+	let ecoRate = $state<number | null>(null);
+	let ecoExp = $state<number | null>(null);
+	let ecoRev = $state<number | null>(null);
 
 	$effect(() => {
 		if (ids.length === 0) {
 			datePick = false;
 			durPick = false;
+			ecoPick = false;
 		}
 	});
 
@@ -38,6 +45,19 @@
 			for (const id of ids) await store.updateTask(id, { duration_min: min });
 		});
 		durPick = false;
+		showToast(tt('{n} task aggiornati', { n: ids.length }));
+	}
+	/** Imposta solo i campi compilati; con `clear` azzera tariffa, spese e ricavo dei task selezionati. */
+	async function setEconomy(clear: boolean) {
+		const patch = clear
+			? { rate_cents: null, expense_cents: null, revenue_cents: null }
+			: { ...(ecoRate != null ? { rate_cents: ecoRate } : {}), ...(ecoExp != null ? { expense_cents: ecoExp } : {}), ...(ecoRev != null ? { revenue_cents: ecoRev } : {}) };
+		if (!Object.keys(patch).length) return;
+		await store.batch(tt('Economia'), async () => {
+			for (const id of ids) await store.updateTask(id, patch);
+		});
+		ecoPick = false;
+		ecoRate = ecoExp = ecoRev = null;
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setPriority(p: Priority) {
@@ -116,7 +136,7 @@
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(todayISO())}>{tt('Oggi')}</DropdownMenu.Item>
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(addDays(todayISO(), 1))}>{tt('Domani')}</DropdownMenu.Item>
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(addDays(todayISO(), 7))}>{tt('Tra una settimana')}</DropdownMenu.Item>
-					<DropdownMenu.Item class="menu-item" onSelect={() => { datePick = true; durPick = false; }}>{tt('Data specifica…')}</DropdownMenu.Item>
+					<DropdownMenu.Item class="menu-item" onSelect={() => { datePick = true; durPick = false; ecoPick = false; }}>{tt('Data specifica…')}</DropdownMenu.Item>
 					<DropdownMenu.Separator class="menu-sep" />
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(null)}>{tt('Rimuovi scadenza')}</DropdownMenu.Item>
 				</DropdownMenu.Content>
@@ -124,7 +144,11 @@
 		</DropdownMenu.Root>
 
 		<!-- durata stimata -->
-		<button class="btn btn-ghost h-8 px-2" onclick={() => { durPick = !durPick; datePick = false; }}><Timer size={14} />{tt('Durata')}</button>
+		<button class="btn btn-ghost h-8 px-2" onclick={() => { durPick = !durPick; datePick = false; ecoPick = false; }}><Timer size={14} />{tt('Durata')}</button>
+
+		{#if uiprefs.showEconomy}
+			<button class="btn btn-ghost h-8 px-2" onclick={() => { ecoPick = !ecoPick; datePick = false; durPick = false; }}><Wallet size={14} />{tt('Economia')}</button>
+		{/if}
 
 		<!-- priorità -->
 		<DropdownMenu.Root>
@@ -185,6 +209,17 @@
 				<input type="date" class="field w-44" bind:value={dateValue} />
 				<button class="btn btn-primary h-8" disabled={!dateValue} onclick={() => setDue(dateValue)}>{tt('Applica a {n}', { n: ids.length })}</button>
 				<button class="btn btn-ghost h-8" onclick={() => (datePick = false)}>{tt('Annulla')}</button>
+			</div>
+		{/if}
+		{#if ecoPick}
+			<div class="flex w-full flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-2 pt-2 pb-1" in:mIn={{ y: 6, duration: 0.18 }}>
+				<label class="flex items-center gap-1.5 text-[12px] text-muted">{tt('Tariffa oraria')}<MoneyField value={ecoRate} compact label={tt('Tariffa oraria')} onchange={(v) => (ecoRate = v)} /></label>
+				<label class="flex items-center gap-1.5 text-[12px] text-muted">{tt('Spese (netto IVA)')}<MoneyField value={ecoExp} compact label={tt('Spese (netto IVA)')} onchange={(v) => (ecoExp = v)} /></label>
+				<label class="flex items-center gap-1.5 text-[12px] text-muted">{tt('Ricavo (netto)')}<MoneyField value={ecoRev} compact label={tt('Ricavo (netto)')} onchange={(v) => (ecoRev = v)} /></label>
+				<button class="btn btn-primary h-8" disabled={ecoRate == null && ecoExp == null && ecoRev == null} onclick={() => setEconomy(false)}>{tt('Applica a {n}', { n: ids.length })}</button>
+				<button class="btn btn-ghost h-8" title={tt('Azzera tariffa, spese e ricavo dei task selezionati')} onclick={() => setEconomy(true)}>{tt('Azzera')}</button>
+				<button class="btn btn-ghost h-8" onclick={() => (ecoPick = false)}>{tt('Annulla')}</button>
+				<span class="w-full text-[11.5px] text-faint">{tt('Si applicano solo i campi compilati.')}</span>
 			</div>
 		{/if}
 		{#if durPick}

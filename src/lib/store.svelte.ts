@@ -46,7 +46,7 @@ function writePurge(m: Record<string, number>) {
 const FIELD_LABELS: Record<string, string> = {
 	title: 'Titolo', description: 'Descrizione', completed: 'Completamento', priority: 'Priorità', status: 'Stato',
 	due_date: 'Scadenza', start_date: 'Inizio', start_time: 'Orario', end_time: 'Orario', recurrence: 'Ripetizione',
-	list_id: 'Lista', group_id: 'Gruppo', parent_id: 'Posizione', sort: 'Ordine', in_gantt: 'Gantt', remind_min: 'Promemoria', tags: 'Etichette', recur_until: 'Ripetizione', milestone: 'Traguardo', board_x: 'Posizione', board_y: 'Posizione', duration_min: 'Durata stimata'
+	list_id: 'Lista', group_id: 'Gruppo', parent_id: 'Posizione', sort: 'Ordine', in_gantt: 'Gantt', remind_min: 'Promemoria', tags: 'Etichette', recur_until: 'Ripetizione', milestone: 'Traguardo', board_x: 'Posizione', board_y: 'Posizione', rate_cents: 'Economia', expense_cents: 'Economia', revenue_cents: 'Economia', vat_rate: 'Economia', duration_min: 'Durata stimata'
 };
 
 type TaskRow = Omit<Task, 'completed' | 'in_gantt' | 'tags' | 'milestone'> & { completed: number; in_gantt: number | null; tags: string | null; milestone: number | null };
@@ -54,7 +54,7 @@ type FilterRow = Omit<Filter, 'rules'> & { rules: string };
 
 const TASK_COLUMNS = [
 	'list_id', 'group_id', 'parent_id', 'title', 'description', 'completed', 'completed_at', 'priority', 'status',
-	'in_gantt', 'milestone', 'tags', 'recur_until', 'remind_min', 'start_date', 'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'board_x', 'board_y', 'duration_min', 'updated_at'
+	'in_gantt', 'milestone', 'tags', 'recur_until', 'remind_min', 'start_date', 'due_date', 'start_time', 'end_time', 'recurrence', 'sort', 'board_x', 'board_y', 'duration_min', 'rate_cents', 'expense_cents', 'revenue_cents', 'vat_rate', 'updated_at'
 ] as const;
 
 class Store {
@@ -237,7 +237,7 @@ class Store {
 			select<FilterRow>('SELECT * FROM filters'),
 			select<Dep>('SELECT * FROM task_deps')
 		]);
-		this.lists = lists;
+		this.lists = lists.map((l) => ({ ...l, currency: l.currency || 'EUR', rate_cents: l.rate_cents ?? null, vat_rate: l.vat_rate ?? 22 }));
 		this.groups = groups;
 		this.tasks = tasks.map((t) => ({ ...t, completed: !!t.completed, in_gantt: t.in_gantt == null ? true : !!t.in_gantt, tags: parseTags(t.tags), milestone: !!t.milestone }));
 		this.notes = notes;
@@ -347,6 +347,10 @@ class Store {
 			board_x: input.board_x ?? null,
 			board_y: input.board_y ?? null,
 			duration_min: input.duration_min ?? null,
+			rate_cents: input.rate_cents ?? null,
+			expense_cents: input.expense_cents ?? null,
+			revenue_cents: input.revenue_cents ?? null,
+			vat_rate: input.vat_rate ?? null,
 			sort: input.sort ?? Date.now(),
 			created_at: now,
 			updated_at: now
@@ -369,10 +373,10 @@ class Store {
 	private insertTask(t: Task) {
 		return exec(
 			`INSERT INTO tasks (id, list_id, group_id, parent_id, title, description, completed, completed_at, priority, status,
-			 in_gantt, milestone, tags, recur_until, remind_min, start_date, due_date, start_time, end_time, recurrence, sort, board_x, board_y, duration_min, created_at, updated_at)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)`,
+			 in_gantt, milestone, tags, recur_until, remind_min, start_date, due_date, start_time, end_time, recurrence, sort, board_x, board_y, duration_min, rate_cents, expense_cents, revenue_cents, vat_rate, created_at, updated_at)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
 			[t.id, t.list_id, t.group_id, t.parent_id, t.title, t.description, t.completed ? 1 : 0, t.completed_at, t.priority,
-				t.status, t.in_gantt ? 1 : 0, t.milestone ? 1 : 0, joinTags(t.tags), t.recur_until, t.remind_min, t.start_date, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.board_x, t.board_y, t.duration_min, t.created_at, t.updated_at]
+				t.status, t.in_gantt ? 1 : 0, t.milestone ? 1 : 0, joinTags(t.tags), t.recur_until, t.remind_min, t.start_date, t.due_date, t.start_time, t.end_time, t.recurrence, t.sort, t.board_x, t.board_y, t.duration_min, t.rate_cents, t.expense_cents, t.revenue_cents, t.vat_rate, t.created_at, t.updated_at]
 		);
 	}
 
@@ -463,6 +467,11 @@ class Store {
 			end_time: t.end_time,
 			recurrence: t.recurrence,
 			recur_until: t.recur_until,
+			duration_min: t.duration_min,
+			rate_cents: t.rate_cents,
+			expense_cents: t.expense_cents,
+			revenue_cents: t.revenue_cents,
+			vat_rate: t.vat_rate,
 			sort: t.sort
 		});
 		for (const c of this.children(t.id)) {
@@ -474,6 +483,11 @@ class Store {
 				tags: [...c.tags],
 				start_date: shift(taskStart(c)),
 				due_date: shift(c.due_date),
+				duration_min: c.duration_min,
+				rate_cents: c.rate_cents,
+				expense_cents: c.expense_cents,
+				revenue_cents: c.revenue_cents,
+				vat_rate: c.vat_rate,
 				sort: c.sort
 			});
 		}
@@ -662,18 +676,18 @@ class Store {
 	// ----- Liste ---------------------------------------------------------------
 
 	async createList(name: string, color: string): Promise<List> {
-		const l: List = { id: uid(), name, color, sort: Date.now(), created_at: nowISO() };
+		const l: List = { id: uid(), name, color, sort: Date.now(), created_at: nowISO(), currency: 'EUR', rate_cents: null, vat_rate: 22 };
 		this.lists.push(l);
 		await this.write(() =>
-			exec('INSERT INTO lists (id, name, color, sort, created_at) VALUES ($1,$2,$3,$4,$5)', [l.id, l.name, l.color, l.sort, l.created_at])
+			exec('INSERT INTO lists (id, name, color, sort, created_at, currency, rate_cents, vat_rate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)', [l.id, l.name, l.color, l.sort, l.created_at, l.currency, l.rate_cents, l.vat_rate])
 		);
 		return l;
 	}
-	async updateList(id: string, patch: Partial<Pick<List, 'name' | 'color'>>) {
+	async updateList(id: string, patch: Partial<Pick<List, 'name' | 'color' | 'currency' | 'rate_cents' | 'vat_rate'>>) {
 		const l = this.lists.find((x) => x.id === id);
 		if (!l) return;
 		Object.assign(l, patch);
-		await this.write(() => exec('UPDATE lists SET name = $2, color = $3 WHERE id = $1', [id, l.name, l.color]));
+		await this.write(() => exec('UPDATE lists SET name = $2, color = $3, currency = $4, rate_cents = $5, vat_rate = $6 WHERE id = $1', [id, l.name, l.color, l.currency, l.rate_cents, l.vat_rate]));
 	}
 	/** Elimina una lista; i suoi task passano alla lista predefinita. L'ultima lista non si può eliminare. */
 	async deleteList(id: string) {

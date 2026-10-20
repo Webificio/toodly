@@ -13,6 +13,7 @@
 	import RidgeView from '../lib/components/RidgeView.svelte';
 	import GroveView from '../lib/components/GroveView.svelte';
 	import SlotView from '../lib/components/SlotView.svelte';
+	import BudgetView from '../lib/components/BudgetView.svelte';
 	import { nav } from '../lib/nav.svelte';
 </script>
 
@@ -42,6 +43,8 @@
 	<GroveView />
 {:else if nav.mode === 'slot'}
 	<SlotView />
+{:else if nav.mode === 'budget'}
+	<BudgetView />
 {:else}
 	<ListView />
 {/if}

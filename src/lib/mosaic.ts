@@ -5,15 +5,17 @@
 import type { Task } from './types';
 import { diffDays } from './dates';
 
-export type MosaicBy = 'priority' | 'deadline' | 'both';
+export type MosaicBy = 'priority' | 'deadline' | 'both' | 'amount';
 export const MOSAIC_MODES: MosaicBy[] = ['priority', 'deadline', 'both'];
+/** Con «Economia» attiva si aggiunge la dimensione per importo. */
+export const MOSAIC_MODES_ECONOMY: MosaicBy[] = [...MOSAIC_MODES, 'amount'];
 
 /** Peso di un task: più grande = più importante e/o più vicino alla scadenza (scaduti pesano di più). */
 export function weight(t: Task, today: string, by: MosaicBy): number {
 	const pr = (1 + t.priority) ** 1.5;
 	const d = t.due_date ? diffDays(t.due_date, today) : null;
 	const urg = d === null ? 0.12 : (3 / (3 + Math.max(d, 0))) * (d < 0 ? 1.7 : 1);
-	const w = by === 'priority' ? pr : by === 'deadline' ? 1 + urg * 6 : pr * urg + 0.35;
+	const w = by === 'priority' ? pr : by === 'deadline' ? 1 + urg * 6 : by === 'amount' ? 1 : pr * urg + 0.35;
 	return t.completed ? w * 0.5 : w;
 }
 
@@ -62,9 +64,15 @@ export function squarify(items: { id: string; v: number }[], x: number, y: numbe
 	return out;
 }
 
-export function buildMosaic(tasks: Task[], today: string, by: MosaicBy, showDone: boolean, w: number, h: number) {
+/**
+ * `amountOf` (solo per `by === 'amount'`) dà l'importo di un task in centesimi: la superficie è proporzionale
+ * all'importo, con una base minima (2% del massimo) perché i task senza importi restino visibili.
+ */
+export function buildMosaic(tasks: Task[], today: string, by: MosaicBy, showDone: boolean, w: number, h: number, amountOf?: (t: Task) => number) {
 	const vis = tasks.filter((t) => showDone || !t.completed);
-	const tiles = squarify(vis.map((t) => ({ id: t.id, v: weight(t, today, by) })), 0, 0, w, h);
+	const amounts = by === 'amount' && amountOf ? vis.map((t) => Math.max(0, amountOf(t))) : null;
+	const base = amounts ? Math.max(1, Math.max(0, ...amounts) * 0.02) : 0;
+	const tiles = squarify(vis.map((t, i) => ({ id: t.id, v: amounts ? (amounts[i] + base) * (t.completed ? 0.5 : 1) : weight(t, today, by) })), 0, 0, w, h);
 	const byId = new Map(vis.map((t) => [t.id, t]));
 	return tiles.map((t) => ({ ...t, task: byId.get(t.id)! }));
 }

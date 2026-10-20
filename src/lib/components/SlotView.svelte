@@ -10,6 +10,8 @@
 	import { paletteStyle } from '../graph';
 	import { t } from '../i18n.svelte';
 	import DurationField from './DurationField.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import { store } from '../store.svelte';
 	import { handleSelectClick, selection, setVisibleOrder } from '../selection.svelte';
 	import { nav, ui, showToast } from '../nav.svelte';
@@ -194,7 +196,7 @@
 					<div
 						data-task
 						data-task-id={tk.id}
-						title="{tk.title} · {hhmm(s)}–{hhmm(e)}"
+						title="{tk.title} · {hhmm(s)}–{hhmm(e)}{ecoShow('slot') && chipOf(tk) ? '\n' + chipOf(tk)?.tip : ''}"
 						class="gx sblock group absolute cursor-grab overflow-hidden {tk.completed ? 'opacity-55' : ''} {blocked ? 'sb-blocked' : ''} {selection.has(tk.id) ? 'sb-multi' : ui.selectedTaskId === tk.id ? 'sb-sel' : ''} {lv ? 'z-30 cursor-grabbing shadow-pop' : 'z-10'}"
 						style="{paletteStyle(info.color(info.rootOf(tk)))}; top:{Y(s) + 1}px; height:{Math.max((e - s) * pxm - 2, 20)}px; left:calc({(b.col / b.cols) * 100}% + 4px); width:calc({100 / b.cols}% - 8px)"
 						onpointerdown={(ev) => blockDown(ev, tk.id, 'move')}
@@ -261,6 +263,7 @@
 							</div>
 							<div class="mt-1 flex flex-wrap items-center gap-1 pl-[21px] text-[11px] text-muted" data-nodrag>
 								<DurationField compact value={tk.duration_min} fallback={durationOf(tk)} onchange={(v) => store.updateTask(tk.id, { duration_min: v })} />
+								{#if ecoShow('slot')}<MoneyChip money={chipOf(tk)} />{/if}
 								<span class="min-w-0 truncate" style="color:var(--gacc)">{info.name(info.rootOf(tk))}</span>
 								<div class="w-full {menuFor === tk.id ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}"><TaskQuickActions task={tk} onmenu={(o) => (menuFor = o ? tk.id : null)} /></div>
 							</div>

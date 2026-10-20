@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Eye, EyeOff } from '@lucide/svelte';
 	import MapBar from './MapBar.svelte';
+	import { ecoShow, rootMoney } from '../economy.svelte';
 	import MapExport from './MapExport.svelte';
 	import MapCanvas from './MapCanvas.svelte';
 	import MapNode from './MapNode.svelte';
@@ -80,6 +81,7 @@
 					<g class="gx" style={paletteStyle(info.color(l.root))}>
 						<line x1={l.x1} x2={l.x2} y1={l.y} y2={l.y} stroke-width="9" stroke-linecap="round" style="stroke:var(--gacc)" opacity="0.9" />
 						<text x={l.x1 - 14} y={l.y} text-anchor="end" dominant-baseline="middle" font-size="12" font-weight="700" style="fill:var(--gacc)">{l.name}</text>
+						{#if ecoShow('metro')}{@const mm = rootMoney(l.root)}{#if mm}<text x={l.x1 - 14} y={l.y + 15} text-anchor="end" dominant-baseline="middle" font-size="10.5" font-weight="600" style="fill:var(--gacc)" opacity="0.85">{mm.text}<title>{mm.tip}</title></text>{/if}{/if}
 					</g>
 				{/each}
 				{#each model.stations as s (s.task.id)}

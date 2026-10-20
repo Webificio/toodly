@@ -29,6 +29,10 @@ export interface Task {
 	board_x: number | null; // posizione sulla bacheca (Cork); null = posto automatico nel suo gruppo
 	board_y: number | null;
 	duration_min: number | null; // durata stimata in minuti (Ridge, Slot); null = predefinita (30 min)
+	rate_cents: number | null; // tariffa oraria del task in centesimi; null = quella della lista
+	expense_cents: number | null; // spese stimate, al netto di IVA, in centesimi
+	revenue_cents: number | null; // ricavo stimato, al netto di IVA, in centesimi
+	vat_rate: number | null; // aliquota IVA % del ricavo; null = quella della lista
 	sort: number;
 	created_at: string;
 	updated_at: string;
@@ -40,6 +44,9 @@ export interface List {
 	color: string;
 	sort: number;
 	created_at: string;
+	currency: string; // valuta degli importi dei task della lista (ISO 4217)
+	rate_cents: number | null; // tariffa oraria predefinita, in centesimi
+	vat_rate: number; // aliquota IVA % predefinita
 }
 
 export interface Group {
@@ -87,7 +94,7 @@ export interface Filter {
 	created_at: string;
 }
 
-export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt' | 'graph' | 'orbit' | 'metro' | 'cork' | 'road' | 'matrix' | 'mosaic' | 'ridge' | 'grove';
+export type Mode = 'list' | 'kanban' | 'calendar' | 'gantt' | 'graph' | 'orbit' | 'metro' | 'cork' | 'road' | 'matrix' | 'mosaic' | 'ridge' | 'grove' | 'slot' | 'budget';
 export type SortMode = 'manual' | 'priority' | 'due';
 
 export const PRIORITIES: { value: Priority; label: string; cls: string }[] = [

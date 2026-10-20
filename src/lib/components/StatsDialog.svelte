@@ -4,6 +4,8 @@
 	import { t } from '../i18n.svelte';
 	import { locale } from '../i18n.svelte';
 	import { store } from '../store.svelte';
+	import { ecoShow } from '../economy.svelte';
+	import { addFigures, formatMoney, totalsOf, zeroFigures, type Figures } from '../money';
 	import { addDays, diffDays, parseISO, startOfWeek, todayISO, toISO } from '../dates';
 
 	let open = $state(false);
@@ -71,6 +73,20 @@
 	const fmtShort = $derived(new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short' }));
 	const range = (w: { start: string; end: string }) => `${fmtShort.format(parseISO(w.start))} – ${fmtShort.format(parseISO(w.end))}`;
 	const fmtAvg = (d: number) => (d < 1 ? t('meno di 1 giorno') : t('{n} giorni', { n: d.toFixed(1).replace(/\.0$/, '') }));
+	// ---- economia (con «Economia» attiva): importi stimati per lista, valute mai sommate tra loro ----
+	const econ = $derived.by(() => {
+		if (!ecoShow('stats')) return null;
+		const rows: { id: string; name: string; color: string; cur: string; f: Figures }[] = [];
+		const total = new Map<string, Figures>();
+		for (const l of store.listsSorted) {
+			for (const [cur, f] of totalsOf(store.tasks.filter((x) => x.list_id === l.id), (id) => store.listOf(id))) {
+				rows.push({ id: l.id, name: l.name, color: l.color, cur, f });
+				total.set(cur, addFigures(total.get(cur) ?? zeroFigures(), f));
+			}
+		}
+		return rows.length ? { rows, total: [...total.entries()].sort(([a], [b]) => a.localeCompare(b)) } : null;
+	});
+	const fm = (c: number, cur: string) => formatMoney(c, cur, locale());
 	const maxList = $derived(Math.max(1, ...stats.byList.map((l) => l.n)));
 </script>
 
@@ -173,6 +189,37 @@
 						</div>
 					{/each}
 				</div>
+			</section>
+		{/if}
+
+		<!-- economia -->
+		{#if econ}
+			<section>
+				<h4 class="mb-1.5 text-[11.5px] font-semibold tracking-wider text-muted uppercase">{t('Economia stimata')}</h4>
+				<table class="w-full text-left text-[12.5px]">
+					<thead class="text-muted"><tr><th class="py-1 font-medium">{t('Lista')}</th><th class="py-1 text-right font-medium">{t('Ricavi netti')}</th><th class="py-1 text-right font-medium">{t('Costi')}</th><th class="py-1 text-right font-medium">{t('Margine')}</th></tr></thead>
+					<tbody>
+						{#each econ.rows as r (r.id + r.cur)}
+							<tr class="border-t border-border">
+								<td class="py-1"><span class="mr-2 inline-block size-2 rounded-full" style="background:{r.color}"></span>{r.name}</td>
+								<td class="py-1 text-right tabular-nums">{fm(r.f.net, r.cur)}</td>
+								<td class="py-1 text-right tabular-nums">{fm(r.f.cost, r.cur)}</td>
+								<td class="py-1 text-right font-medium tabular-nums" style={r.f.net > 0 && r.f.margin < 0 ? 'color:var(--p3)' : ''}>{fm(r.f.margin, r.cur)}</td>
+							</tr>
+						{/each}
+					</tbody>
+					<tfoot>
+						{#each econ.total as [cur, f] (cur)}
+							<tr class="border-t-2 border-border font-semibold">
+								<td class="py-1">{t('Totale')} {cur}</td>
+								<td class="py-1 text-right tabular-nums">{fm(f.net, cur)}</td>
+								<td class="py-1 text-right tabular-nums">{fm(f.cost, cur)}</td>
+								<td class="py-1 text-right tabular-nums" style={f.net > 0 && f.margin < 0 ? 'color:var(--p3)' : ''}>{fm(f.margin, cur)}</td>
+							</tr>
+						{/each}
+					</tfoot>
+				</table>
+				<p class="mt-1 text-[11.5px] text-faint">{t('Tutti i task del set, completati compresi. Valute diverse non si sommano.')}</p>
 			</section>
 		{/if}
 

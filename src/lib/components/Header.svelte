@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, Orbit, TrainFront, StickyNote, Route, Grid2x2, LayoutDashboard, Mountain, TreeDeciduous, CalendarClock, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
+	import { List as ListIcon, Columns3, CalendarDays, ChartGantt, Network, Orbit, TrainFront, StickyNote, Route, Grid2x2, LayoutDashboard, Mountain, TreeDeciduous, CalendarClock, Coins, ArrowUpDown, ChevronLeft, ChevronRight, Check, Undo2, Redo2, CircleAlert, LoaderCircle, Search } from '@lucide/svelte';
 	import { t } from '../i18n.svelte';
 	import { store } from '../store.svelte';
 	import { nav, go, ui } from '../nav.svelte';
+	import { uiprefs } from '../uiprefs.svelte';
 	import { parseScope } from '../views';
 	import { addDays, addMonths, formatDayShort, formatMonth, startOfWeek, todayISO } from '../dates';
 
@@ -21,8 +22,10 @@
 		{ id: 'mosaic', label: 'Mosaic', icon: LayoutDashboard },
 		{ id: 'ridge', label: 'Ridge', icon: Mountain },
 		{ id: 'grove', label: 'Grove', icon: TreeDeciduous },
-		{ id: 'slot', label: 'Slot', icon: CalendarClock }
+		{ id: 'slot', label: 'Slot', icon: CalendarClock },
+		{ id: 'budget', label: 'Budget', icon: Coins }
 	] as const;
+	const shownModes = $derived(modes.filter((m) => m.id !== 'budget' || uiprefs.showEconomy));
 	const sorts = [
 		{ id: 'manual', label: 'Manuale (trascina)', short: 'Manuale' },
 		{ id: 'priority', label: 'Priorità', short: 'Priorità' },
@@ -62,7 +65,7 @@
 	<h1 class="truncate text-[17px] font-semibold tracking-tight">{title}</h1>
 
 	<div class="relative ml-3 flex rounded-lg bg-hover p-0.5">
-		{#each modes as m (m.id)}
+		{#each shownModes as m (m.id)}
 			<button
 				class="vmode relative z-10 flex h-7 items-center rounded-md px-2 text-[12.5px] font-medium transition-colors duration-150 {nav.mode === m.id ? 'vmode-on bg-panel text-fg shadow-sm' : 'text-muted hover:text-fg'}"
 				title={t(m.label)}

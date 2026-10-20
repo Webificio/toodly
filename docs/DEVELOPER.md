@@ -62,6 +62,9 @@ src/
     orbit.ts / metro.ts      Orbit radar and Metro subway layouts + `orbitToMermaid` / `metroToMermaid` (pure; tests/maps.test.ts); exportmap.ts saves them
     cork.ts / road.ts / matrix.ts / mosaic.ts / ridge.ts / grove.ts / slot.ts   layouts of the other views (pure; tests/maps.test.ts); `tasks.board_x/board_y` (Cork) and `tasks.duration_min` (Ridge/Slot, minutes, default 30; edited with `DurationField.svelte`, conversions and localized text in `duration.ts`, tests in tests/maps.test.ts) are the only added columns
     components/CorkView.svelte, RoadView.svelte, MatrixView.svelte, MosaicView.svelte, RidgeView.svelte, GroveView.svelte, SlotView.svelte   views built on MapCanvas/MapNode where they are canvases
+    money.ts / budget.ts     Economy (opt-in, Settings → Economy): amounts in cents, labour cost = duration × rate, VAT on revenue only, per-group totals by currency (`economyByGroup`), the Budget view model (`buildBudget`) and CSV; pure, tests in tests/maps.test.ts. Columns: `tasks.rate_cents/expense_cents/revenue_cents/vat_rate`, `lists.currency/rate_cents/vat_rate` (additive, no export-format bump)
+    economy.svelte.ts        `ecoShow(view)` (Economy flag + per-view switches in `uiprefs.economyOff`), per-group totals of the current scope (`eco.scoped`, lazy), `chipOf` / `sumOf` / `groupMoney`; components/MoneyChip.svelte is the pill shown in the views
+    components/BudgetView.svelte, MoneyField.svelte   the Budget view; amount input (also used in the task panel, list editor and multi-selection bar)
     components/OrbitView.svelte, MetroView.svelte   the two views; MapCanvas (pan/zoom/minimap), MapNode (bubble + hover card), MapBar (add bar) are shared
     graph.ts                 Graph: pure layout (nodes, connectors, palette, dependency curves), unit-tested in tests/graph.test.ts
     uiprefs.svelte.ts        UI preferences (task numbering) in localStorage

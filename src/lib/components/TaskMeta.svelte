@@ -4,6 +4,8 @@
 	import { store } from '../store.svelte';
 	import { relativeDay, diffDays, todayISO } from '../dates';
 	import { isOverdue } from '../views';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import type { Task } from '../types';
 
 	let { task, showList = true }: { task: Task; showList?: boolean } = $props();
@@ -47,6 +49,7 @@
 	{#if nNotes}<span class="inline-flex items-center gap-1"><MessageSquare size={12} />{nNotes}</span>{/if}
 	{#if nFiles}<span class="inline-flex items-center gap-1"><Paperclip size={12} />{nFiles}</span>{/if}
 	{#each task.tags as g (g)}<span class="inline-flex items-center rounded-full bg-hover px-1.5 py-px text-accent"><Hash size={10} />{g}</span>{/each}
+	{#if ecoShow()}<MoneyChip money={chipOf(task)} />{/if}
 	{#if showList && list}
 		<span class="inline-flex items-center gap-1"><span class="size-2 rounded-full" style="background:{list.color}"></span>{list.name}</span>
 	{/if}

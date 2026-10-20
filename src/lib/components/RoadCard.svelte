@@ -2,6 +2,8 @@
 	import { CalendarDays, ChevronLeft, ChevronRight, Hourglass } from '@lucide/svelte';
 	import Checkbox from './Checkbox.svelte';
 	import TaskQuickActions from './TaskQuickActions.svelte';
+	import MoneyChip from './MoneyChip.svelte';
+	import { chipOf, ecoShow } from '../economy.svelte';
 	import { handleSelectClick, selection } from '../selection.svelte';
 	import { store } from '../store.svelte';
 	import { ui } from '../nav.svelte';
@@ -59,6 +61,7 @@
 			<div class="absolute right-0 bottom-1.5 left-0 flex items-center gap-1.5 overflow-hidden pr-2 pl-3 text-[10.5px] whitespace-nowrap {over ? 'text-p3' : 'text-muted'}">
 				{#if blocked}<Hourglass size={10} class="shrink-0 text-p2" />{/if}
 				{#if task.due_date}<span class="inline-flex shrink-0 items-center gap-0.5 font-medium"><CalendarDays size={10} />{relativeDay(task.due_date)}</span>{/if}
+				{#if ecoShow('road')}<MoneyChip money={chipOf(task)} />{/if}
 				{#if list}<span class="ml-auto size-2 shrink-0 rounded-full" style="background:{list.color}" title={list.name}></span>{/if}
 			</div>
 		{/if}

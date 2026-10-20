@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  Toodly is a fast, local-first desktop to-do app, written in Rust, cross-platform (Windows, macOS and Linux), in the spirit of TickTick and Linear.<br>
-  Lists, Kanban, calendar with time-blocking, sub-tasks, dependencies, multiple windows and independent data sets.
+  Toodly is a fast, local-first desktop to-do list and budget manager, written in Rust, cross-platform (Windows, macOS and Linux).<br>
+  Lists, Kanban, calendar with time-blocking, sub-tasks, dependencies, estimated costs and revenue, multiple windows and independent data sets.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.3.0-6b3fa0.svg">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.3.5-6b3fa0.svg">
   <img alt="Tauri v2" src="https://img.shields.io/badge/Tauri-v2-24C8DB.svg?logo=tauri&logoColor=white">
   <img alt="Svelte 5" src="https://img.shields.io/badge/Svelte-5-FF3E00.svg?logo=svelte&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg">
@@ -31,8 +31,19 @@ A to-do list is about the simplest dataset there is: a few dozen rows with a tit
 | How are my projects doing? | **Grove** (one tree per group: leaves = open, fruits = done, fallen leaves = overdue) |
 | Where do I put it in my day? | **Slot** (drag tasks into the free gaps of a day) |
 | Can I just arrange them my way? | **Cork** (a draggable cork board of sticky notes) |
+| What will it cost, and what will it earn? | **Budget** (optional: revenue, costs and margin by group and period) |
 
 All of them are fully interactive rather than static charts: the same add bar, selection (`Ctrl`/`Shift`), keyboard navigation, details panel, hover card with quick actions and *Completed* toggle everywhere; canvas views add pan, zoom and a minimap, and several let you change the data by dragging or with the arrows. The view switcher shows only icons (the name appears for the active view or on hover) so fourteen views stay out of the way. Everything stays local: the views only read and edit your own SQLite data.
+
+## Budget manager
+
+Toodly is also a small budget manager. Turn on **Settings → Economy** and every task can carry an estimate of the money side of the work, on top of its estimated duration:
+
+- **Labour cost** = estimated duration × an hourly rate (set once per list, override per task).
+- **Expenses** and **revenue**, both entered **net of VAT**; the VAT rate (22% by default) is applied to the revenue, so you also get the gross amount and the VAT.
+- **Margin** = net revenue − (labour cost + expenses).
+
+Each list has its own **currency**, so one data set can mix euros and dollars (they are never added together). Totals roll up through groups, sub-groups and sub-tasks, and the optional **Budget** view shows revenue, costs and margin by group and by month or week, with CSV export for Excel. Chips and totals can appear in every other view too, each one with its own on/off switch. It is all off until you enable it, and amounts never end up in Mermaid or Markdown exports. See the [user guide](docs/USER_GUIDE.md#7-economy-and-budget) for the details.
 
 ## Screenshots
 
@@ -79,7 +90,7 @@ All of them are fully interactive rather than static charts: the same add bar, s
 </tr>
 </table>
 
-> **Status:** early release (1.3.0). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
+> **Status:** early release (1.3.5). toodly is young and has been tested mainly on Windows; bug reports and feedback are very welcome.
 
 ## Download
 
@@ -90,9 +101,9 @@ You can also build them yourself, see [Building](#building).
 ## Highlights
 
 - **Tasks** with 4 priorities, hierarchical sub-tasks, **dependencies** ("waiting" until prerequisites are done), due date and start/end time, recurrence, drag & drop reordering.
-- **Views**: 14 ways to look at the same tasks — List, Kanban (by status or priority), monthly and weekly Calendar with time-blocking, Gantt, Graph, and the experimental data-visualization views described [above](#one-dataset-fourteen-views), plus smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
+- **Views**: 14 ways (15 with the optional Budget report) to look at the same tasks — List, Kanban (by status or priority), monthly and weekly Calendar with time-blocking, Gantt, Graph, and the experimental data-visualization views described [above](#one-dataset-fourteen-views), plus smart views (*Today*, *Next 7 days*, *Important*, *All*), colored lists, and custom **filters** with AND/OR rules.
 - **Themes**: Default, Material, CRT (green phosphor), Nord, Solarized, Dracula, Gruvbox and Rosé Pine, each in light and dark (Settings → Appearance). Adding your own takes one CSS block, see [docs/THEMES.md](docs/THEMES.md).
-- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt, Graph, Orbit and Metro views with Mermaid export, estimated durations and a daily capacity (Ridge), statistics.
+- **Productivity**: global search (`Ctrl+K`), undo/redo (`Ctrl+Z`), per-task reminders with system notifications, Gantt, Graph, Orbit and Metro views with Mermaid export, estimated durations and a daily capacity (Ridge), optional estimated costs/revenue with a Budget view, statistics.
 - **Groups and sub-groups** (folders) independent from lists, multi-selection with bulk edits, bulk creation of tasks from pasted text or Markdown.
 - **Rich task details**: Markdown description, multiple notes, file attachments.
 - **Multi-window**: every window opens its own **data set**; position, size, sidebar width and view of each window are saved and restored on restart (multi-monitor aware).

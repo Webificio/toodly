@@ -6,15 +6,17 @@
 	import { expandGroup } from '../groupui.svelte';
 	import { t } from '../i18n.svelte';
 	import type { Group } from '../types';
+	import type { Summary } from '../money';
 
 	let {
 		group,
 		depth = 0,
 		count = { total: 0, high: 0, medium: 0 },
 		collapsed = false,
+		money = null,
 		ontoggle,
 		onaddtask
-	}: { group: Group; depth?: number; count?: { total: number; high: number; medium: number }; collapsed?: boolean; ontoggle: () => void; onaddtask: () => void } = $props();
+	}: { group: Group; depth?: number; count?: { total: number; high: number; medium: number }; collapsed?: boolean; money?: Summary | null; ontoggle: () => void; onaddtask: () => void } = $props();
 
 	let over = $state(false);
 
@@ -48,6 +50,7 @@
 		<span class="shrink-0 rounded-full bg-hover px-1.5 text-[11px] text-muted tabular-nums">{count.total}</span>
 		{#if count.high > 0}<span class="shrink-0 rounded-full px-1.5 text-[11px] font-semibold text-white tabular-nums" style="background:var(--p3)">{count.high}</span>{/if}
 		{#if count.medium > 0}<span class="shrink-0 rounded-full px-1.5 text-[11px] font-semibold text-white tabular-nums" style="background:var(--p2)">{count.medium}</span>{/if}
+		{#if money}<span class="shrink-0 truncate rounded-full border border-border px-1.5 text-[11px] font-medium tabular-nums" style={money.tone === 'neg' ? 'color:var(--p3)' : money.tone === 'pos' ? 'color:var(--ok,#22a06b)' : ''} title={money.tip}>{money.text}</span>{/if}
 		<span class="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100" data-nodrag onclick={(e) => e.stopPropagation()}>
 			<button class="icon-btn size-7" title={t('Aggiungi un task…')} aria-label={t('Aggiungi un task…')} onclick={onaddtask}><Plus size={14} /></button>
 			<button class="icon-btn size-7" title={t('Nuovo sottogruppo')} aria-label={t('Nuovo sottogruppo')} onclick={() => (ui.groupEditor = 'new:' + group.id)}><FolderPlus size={14} /></button>
