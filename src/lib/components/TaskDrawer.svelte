@@ -13,6 +13,8 @@
 	import { normTag } from '../tags';
 	import { saveTemplateFrom } from '../templates.svelte';
 	import { t as tt, i18n } from '../i18n.svelte';
+	import DurationField from './DurationField.svelte';
+	import { durationOf } from '../ridge';
 	import { ui, showToast } from '../nav.svelte';
 	import { mIn, mOut } from '../motion';
 	import { renderMarkdown } from '../markdown';
@@ -131,10 +133,6 @@
 		titleEl?.focus();
 	}
 
-	const durOptions = $derived([
-		{ value: '', label: tt('30 minuti (predefinita)') },
-		...[5, 10, 15, 20, 45, 60, 90, 120, 180, 240, 360, 480].map((m) => ({ value: String(m), label: m < 60 ? tt('{n} minuti', { n: m }) : m === 60 ? tt('1 ora') : m === 90 ? tt('1 ora e mezza') : tt('{n} ore', { n: m / 60 }) }))
-	]);
 	const remindOptions = $derived([
 		{ value: '', label: tt('Nessuno') },
 		{ value: '0', label: tt("All'ora di inizio") },
@@ -376,7 +374,7 @@
 				</div>
 
 				<span class="flex items-center gap-1.5 text-muted"><Timer size={14} />{tt('Durata stimata')}</span>
-				<Select value={task.duration_min == null ? '' : String(task.duration_min)} options={durOptions} onchange={(v) => store.updateTask(task.id, { duration_min: v === '' ? null : Number(v) })} />
+				<DurationField value={task.duration_min} fallback={durationOf(task)} onchange={(v) => store.updateTask(task.id, { duration_min: v })} />
 
 				<span class="flex items-center gap-1.5 text-muted"><Bell size={14} />{tt('Promemoria')}</span>
 				<div class="min-w-0">

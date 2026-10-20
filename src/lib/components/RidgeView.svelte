@@ -7,6 +7,7 @@
 	import { groupInfo } from '../maps';
 	import { paletteStyle } from '../graph';
 	import { t } from '../i18n.svelte';
+	import DurationField from './DurationField.svelte';
 	import { store } from '../store.svelte';
 	import { handleSelectClick, selection, setVisibleOrder } from '../selection.svelte';
 	import { nav, ui } from '../nav.svelte';
@@ -89,7 +90,6 @@
 		if (!task.due_date) return;
 		store.updateTask(task.id, { due_date: addDays(task.due_date, n), ...(task.start_date ? { start_date: addDays(task.start_date, n) } : {}) });
 	}
-	const durChoices = [15, 30, 45, 60, 90, 120, 180, 240];
 	let menuFor = $state<string | null>(null);
 </script>
 
@@ -180,9 +180,7 @@
 							<div class="flex flex-wrap items-center gap-1 pl-[21px] text-[11px] text-muted" data-nodrag>
 								<button class="icon-btn size-5" title={t('Un giorno prima (Maiusc: una settimana)')} aria-label={t('Un giorno prima (Maiusc: una settimana)')} disabled={tk.completed} onclick={(e) => { e.stopPropagation(); shift(tk, e.shiftKey ? -7 : -1); }}><ChevronLeft size={13} /></button>
 								<button class="icon-btn size-5" title={t('Un giorno dopo (Maiusc: una settimana)')} aria-label={t('Un giorno dopo (Maiusc: una settimana)')} disabled={tk.completed} onclick={(e) => { e.stopPropagation(); shift(tk, e.shiftKey ? 7 : 1); }}><ChevronRight size={13} /></button>
-								<select class="rounded border border-border bg-transparent px-1 py-0.5 text-[11px]" title={t('Durata stimata')} value={String(durationOf(tk))} onclick={(e) => e.stopPropagation()} onchange={(e) => store.updateTask(tk.id, { duration_min: Number(e.currentTarget.value) })}>
-									{#each [...new Set([...durChoices, durationOf(tk)])].sort((a, b) => a - b) as m (m)}<option value={String(m)}>{fmtDur(m)}</option>{/each}
-								</select>
+								<DurationField compact value={tk.duration_min} fallback={durationOf(tk)} onchange={(v) => store.updateTask(tk.id, { duration_min: v })} />
 								<div class="w-full {menuFor === tk.id ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}"><TaskQuickActions task={tk} onmenu={(o) => (menuFor = o ? tk.id : null)} /></div>
 							</div>
 						</div>

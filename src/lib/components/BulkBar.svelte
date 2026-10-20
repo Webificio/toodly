@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { CalendarDays, Flag, FolderOpen, Folder, Layers, CheckCheck, Trash2, X, ChevronDown } from '@lucide/svelte';
+	import { CalendarDays, Flag, FolderOpen, Folder, Layers, CheckCheck, Trash2, X, ChevronDown, Timer } from '@lucide/svelte';
 	import { store } from '../store.svelte';
 	import { showToast, askConfirm } from '../nav.svelte';
 	import { selection, clearSelection, selectAll } from '../selection.svelte';
 	import { addDays, todayISO } from '../dates';
 	import { mIn, mOut } from '../motion';
 	import { t as tt } from '../i18n.svelte';
+	import DurationField from './DurationField.svelte';
 	import { PRIORITIES, STATUSES, type Priority, type Status } from '../types';
 
 	// ignora gli ID non più esistenti (task eliminati da un'altra finestra)
@@ -14,10 +15,13 @@
 
 	let datePick = $state(false);
 	let dateValue = $state(todayISO());
+	let durPick = $state(false);
+	let durValue = $state<number | null>(null);
 
 	$effect(() => {
 		if (ids.length === 0) {
 			datePick = false;
+			durPick = false;
 		}
 	});
 
@@ -27,6 +31,13 @@
 			for (const id of ids) await store.updateTask(id, patch);
 		});
 		datePick = false;
+		showToast(tt('{n} task aggiornati', { n: ids.length }));
+	}
+	async function setDuration(min: number | null) {
+		await store.batch(tt('Durata stimata'), async () => {
+			for (const id of ids) await store.updateTask(id, { duration_min: min });
+		});
+		durPick = false;
 		showToast(tt('{n} task aggiornati', { n: ids.length }));
 	}
 	async function setPriority(p: Priority) {
@@ -105,12 +116,15 @@
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(todayISO())}>{tt('Oggi')}</DropdownMenu.Item>
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(addDays(todayISO(), 1))}>{tt('Domani')}</DropdownMenu.Item>
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(addDays(todayISO(), 7))}>{tt('Tra una settimana')}</DropdownMenu.Item>
-					<DropdownMenu.Item class="menu-item" onSelect={() => (datePick = true)}>{tt('Data specifica…')}</DropdownMenu.Item>
+					<DropdownMenu.Item class="menu-item" onSelect={() => { datePick = true; durPick = false; }}>{tt('Data specifica…')}</DropdownMenu.Item>
 					<DropdownMenu.Separator class="menu-sep" />
 					<DropdownMenu.Item class="menu-item" onSelect={() => setDue(null)}>{tt('Rimuovi scadenza')}</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Portal>
 		</DropdownMenu.Root>
+
+		<!-- durata stimata -->
+		<button class="btn btn-ghost h-8 px-2" onclick={() => { durPick = !durPick; datePick = false; }}><Timer size={14} />{tt('Durata')}</button>
 
 		<!-- priorità -->
 		<DropdownMenu.Root>
@@ -171,6 +185,14 @@
 				<input type="date" class="field w-44" bind:value={dateValue} />
 				<button class="btn btn-primary h-8" disabled={!dateValue} onclick={() => setDue(dateValue)}>{tt('Applica a {n}', { n: ids.length })}</button>
 				<button class="btn btn-ghost h-8" onclick={() => (datePick = false)}>{tt('Annulla')}</button>
+			</div>
+		{/if}
+		{#if durPick}
+			<div class="flex w-full flex-wrap items-center gap-2 border-t border-border px-2 pt-2 pb-1" in:mIn={{ y: 6, duration: 0.18 }}>
+				<DurationField value={durValue} onchange={(v) => (durValue = v)} />
+				<button class="btn btn-primary h-8" onclick={() => setDuration(durValue)}>{tt('Applica a {n}', { n: ids.length })}</button>
+				<button class="btn btn-ghost h-8" onclick={() => setDuration(null)}>{tt('Predefinita')}</button>
+				<button class="btn btn-ghost h-8" onclick={() => (durPick = false)}>{tt('Annulla')}</button>
 			</div>
 		{/if}
 	</div>

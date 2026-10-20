@@ -22,6 +22,8 @@ export interface TplNode {
 	start_time: string | null;
 	end_time: string | null;
 	remind_min: number | null;
+	/** durata stimata in minuti (assente nei modelli salvati prima: durata predefinita) */
+	duration_min?: number | null;
 	children: TplNode[];
 }
 export interface Template {
@@ -64,6 +66,7 @@ function nodeOf(task: Task, ref: string, depth: number): TplNode {
 		start_time: task.start_time,
 		end_time: task.end_time,
 		remind_min: task.remind_min,
+		duration_min: task.duration_min,
 		children: depth >= MAX_DEPTH ? [] : store.children(task.id).map((c) => nodeOf(c, ref, depth + 1))
 	};
 }
@@ -130,7 +133,8 @@ export async function useTemplate(tpl: Template, opts: UseOpts): Promise<string 
 					start_date: n.startOff == null ? undefined : addDays(opts.base, n.startOff),
 					start_time: n.start_time,
 					end_time: n.end_time,
-					remind_min: n.dueOff == null ? null : n.remind_min
+					remind_min: n.dueOff == null ? null : n.remind_min,
+					duration_min: n.duration_min ?? null
 				});
 				for (const c of n.children) await make(c, created.id);
 				return created.id;

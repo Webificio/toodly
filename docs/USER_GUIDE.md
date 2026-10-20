@@ -150,7 +150,7 @@ A grid of tiles: the bigger the tile, the more important and/or closer to its de
 
 ### Ridge
 
-The workload of the next 7, 14 or 28 days as a mountain profile. A day's load is the sum of the **estimated durations** of the tasks due that day (set it in the task details, *Planning › Estimated duration*; default 30 minutes, or the time range when the task has one). The dashed line is your **daily capacity** (default 6 h, change it with − / +): peaks above it turn red. Click a day to list its tasks, move them with ◀ ▶ and change their duration; *Overdue* appears as the first column.
+The workload of the next 7, 14 or 28 days as a mountain profile. A day's load is the sum of the **estimated durations** of the tasks due that day (set it in the task details, *Planning › Estimated duration*: type the hours, half an hour is `.5`, e.g. `1.5`, `8`, `40`; the text next to the field reads it as days, weeks and months, counting 8 h per day, 5 days per week and 20 days per month; default 30 minutes, or the time range when the task has one). The dashed line is your **daily capacity** (default 6 h, change it with − / +): peaks above it turn red. Click a day to list its tasks, move them with ◀ ▶ and change their duration; *Overdue* appears as the first column.
 
 ### Grove
 
@@ -215,7 +215,7 @@ The sidebar entry **No filters** turns off the active filter and goes back to *A
 - `Ctrl/Cmd + A` selects every visible task.
 - `Esc` (or **None** in the bar) clears the selection.
 
-A bar appears at the bottom with the number of selected tasks. Use it to set the **due date** (quick choices such as Today, Tomorrow, In a week, or a specific date), **priority**, **list**, **group** and **status** for all of them at once, or to **complete** or **delete** them.
+A bar appears at the bottom with the number of selected tasks. Use it to set the **due date** (quick choices such as Today, Tomorrow, In a week, or a specific date), **estimated duration** (type the hours, `.5` is half an hour; *Default* resets it), **priority**, **list**, **group** and **status** for all of them at once, or to **complete** or **delete** them.
 
 ## 8. Adding many tasks at once
 
@@ -288,7 +288,7 @@ In **Settings → Data → Automatic backup** choose how often (daily/weekly), t
 
 ### Templates and previews
 
-- Open a task and click the template icon in the top bar of the panel to **save it as a template** (with its sub-tasks). In the List view the **Template** button lists your templates: pick a reference date and *Use*.
+- Open a task and click the template icon in the top bar of the panel to **save it as a template** (with its sub-tasks, dates relative to the reference date, and estimated durations). In the List view the **Template** button lists your templates: pick a reference date and *Use*.
 - The eye icon next to an attachment shows a preview (images, PDF, text) without leaving toodly.
 
 ### Delete all data

@@ -330,3 +330,41 @@ describe('slot', () => {
 		expect(placePatch(mkTask({ id: 'x' }), '2026-10-19', 600, 90)).toEqual({ due_date: '2026-10-19', start_time: '10:00', end_time: '11:30' });
 	});
 });
+
+import { describeDuration, formatHours, normalizeMinutes, parseHours, splitDuration } from '../src/lib/duration';
+describe('durata stimata', () => {
+	const tr = (k: string, p?: Record<string, string | number>) => (p ? k.replace(/\{(\w+)\}/g, (_, n) => String(p[n])) : k);
+	it('parsing delle ore', () => {
+		expect(parseHours('')).toBeNull();
+		expect(parseHours('0.5')).toBe(30);
+		expect(parseHours('1,5')).toBe(90);
+		expect(parseHours('8 h')).toBe(480);
+		expect(parseHours('1.2')).toBe(60); // arrotondato alla mezz'ora
+		expect(parseHours('0')).toBe(30); // minimo mezz'ora
+		expect(parseHours('abc')).toBeUndefined();
+		expect(parseHours('1.2.3')).toBeUndefined();
+		expect(parseHours('-2')).toBeUndefined();
+		expect(parseHours('99999')).toBe(2000 * 60);
+	});
+	it('formato del campo e normalizzazione', () => {
+		expect(formatHours(30)).toBe('0.5');
+		expect(formatHours(90, ',')).toBe('1,5');
+		expect(formatHours(45)).toBe('0.75');
+		expect(formatHours(480)).toBe('8');
+		expect(normalizeMinutes(10)).toBe(30);
+	});
+	it('scomposizione con giorni da 8 h, settimane da 5 giorni, mesi da 20 giorni', () => {
+		expect(splitDuration(172.5 * 60)).toEqual({ months: 1, weeks: 0, days: 1, hours: 4, minutes: 30 });
+		expect(splitDuration(40 * 60)).toEqual({ months: 0, weeks: 1, days: 0, hours: 0, minutes: 0 });
+	});
+	it('testo leggibile', () => {
+		expect(describeDuration(30, tr, 'it')).toBe('30 min');
+		expect(describeDuration(90, tr, 'it')).toBe('1 h 30 min');
+		expect(describeDuration(480, tr, 'it')).toBe('{n} giorno'.replace('{n}', '1'));
+		expect(describeDuration(720, tr, 'it')).toBe('1 giorno e 4 h');
+		expect(describeDuration(960, tr, 'it')).toBe('2 giorni');
+		expect(describeDuration(172.5 * 60, tr, 'it')).toBe('1 mese, 1 giorno e 4 h 30 min');
+		expect(describeDuration(40 * 60, tr, 'en')).toBe('1 settimana');
+		expect(describeDuration(80 * 60, tr, 'en')).toBe('2 settimane');
+	});
+});

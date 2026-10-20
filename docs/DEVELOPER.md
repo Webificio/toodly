@@ -60,7 +60,7 @@ src/
     components/GraphView.svelte   Graph: canvas (native scroll + scaled world), minimap, zoom, drag & drop; GraphGroup / GraphTask are its nodes
     maps.ts                  Orbit + Metro: shared pure helpers (root group per task, colours, breadcrumb, label picking, polar coordinates)
     orbit.ts / metro.ts      Orbit radar and Metro subway layouts + `orbitToMermaid` / `metroToMermaid` (pure; tests/maps.test.ts); exportmap.ts saves them
-    cork.ts / road.ts / matrix.ts / mosaic.ts / ridge.ts / grove.ts / slot.ts   layouts of the other views (pure; tests/maps.test.ts); `tasks.board_x/board_y` (Cork) and `tasks.duration_min` (Ridge, default 30 min) are the only added columns
+    cork.ts / road.ts / matrix.ts / mosaic.ts / ridge.ts / grove.ts / slot.ts   layouts of the other views (pure; tests/maps.test.ts); `tasks.board_x/board_y` (Cork) and `tasks.duration_min` (Ridge/Slot, minutes, default 30; edited with `DurationField.svelte`, conversions and localized text in `duration.ts`, tests in tests/maps.test.ts) are the only added columns
     components/CorkView.svelte, RoadView.svelte, MatrixView.svelte, MosaicView.svelte, RidgeView.svelte, GroveView.svelte, SlotView.svelte   views built on MapCanvas/MapNode where they are canvases
     components/OrbitView.svelte, MetroView.svelte   the two views; MapCanvas (pan/zoom/minimap), MapNode (bubble + hover card), MapBar (add bar) are shared
     graph.ts                 Graph: pure layout (nodes, connectors, palette, dependency curves), unit-tested in tests/graph.test.ts

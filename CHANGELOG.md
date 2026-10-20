@@ -7,6 +7,9 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+### Changed
+- **Estimated duration** is now a free field instead of a drop-down: type the **hours** (half an hour is `.5`, so `0.5`, `1.5`, `8`, `12`; dot or comma), arrows `↑`/`↓` change it by half an hour, empty means the default (30 minutes, or the time range when set). Values are rounded to the nearest half hour (minimum 0.5 h). Next to the field a localized reading shows what you typed in months, weeks, days, hours and minutes (e.g. `12` → *1 day and 4 h*), counting 1 day = 8 h, 1 week = 5 days, 1 month = 20 days. The same field replaces the drop-downs in the Slot tray and the Ridge day list. The same field is also in the multi-selection bar (*Duration*, with a *Default* button to reset) and templates now remember the estimated duration of the task and its sub-tasks (older templates keep the default). Stored values (minutes) are unchanged, no migration.
+
 ## [1.3.0] - 2026-10-19
 
 ### Added
