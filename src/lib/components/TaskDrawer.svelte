@@ -142,7 +142,7 @@
 		if (!v.trim()) return;
 		if (mode === 'upper') titleDraft = v.toLocaleUpperCase();
 		else if (mode === 'lower') titleDraft = v.toLocaleLowerCase();
-		else if (mode === 'first') titleDraft = v.replace(/\p{L}/u, (c) => c.toLocaleUpperCase());
+		else if (mode === 'first') titleDraft = v.toLocaleLowerCase().replace(/\p{L}/u, (c) => c.toLocaleUpperCase());
 		else titleDraft = v.toLocaleLowerCase().replace(/(^|[\s\-'’/(])(\p{L})/gu, (_, a, c) => a + c.toLocaleUpperCase());
 		saveTitle();
 		titleEl?.focus();

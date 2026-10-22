@@ -7,6 +7,9 @@ The section of the version being released is used as the text of the GitHub rele
 
 ## [Unreleased]
 
+### Fixed
+- **Title capitalization**: *Capitalize first letter* now lowercases the rest of the title, so it also works after *Capitalize Each Word* or *ALL CAPS* (it used to leave the other capitals in place).
+
 ## [1.3.5] - 2026-10-20
 
 ### Added
